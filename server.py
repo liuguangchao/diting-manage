@@ -186,6 +186,16 @@ def api_update_order(o_id):
         with db() as c: c.execute("UPDATE orders SET status=? WHERE order_id=?", (new_status, o_id))
     return jsonify(load_order(o_id))
 
+@app.route("/api/orders/<o_id>", methods=["PATCH"])
+def api_patch_order(o_id):
+    data = request.get_json()
+    allowed = ["status", "po_number", "buyer_id", "currency", "incoterms", "incoterms_place", "payment_method", "total_amount"]
+    sets = [f"{k}=?" for k in allowed if k in data]
+    if sets:
+        with db() as c:
+            c.execute(f"UPDATE orders SET {','.join(sets)} WHERE order_id=?", [data[k] for k in allowed if k in data] + [o_id])
+    return jsonify(load_order(o_id))
+
 @app.route("/api/orders/<o_id>", methods=["DELETE"])
 def api_delete_order(o_id):
     with db() as c:
@@ -235,19 +245,12 @@ def api_create_doc():
     data = request.get_json()
     doc_id = data.get("doc_id") or ("d" + uuid.uuid4().hex[:10])
     with db() as c:
-        # Deduct shipped_qty from order lines
-        for l in data.get("lines", []):
-            c.execute("UPDATE order_lines SET shipped_qty=shipped_qty+? WHERE line_id=?", (l.get("shipped_qty", 0), l["line_id"]))
-        c.execute("""INSERT INTO documents VALUES (?,?,?,?,?,?,?,?,?,?,datetime('now','localtime'),strftime('%s','now'))""",
+        c.execute("""INSERT INTO documents (doc_id,invoice_no,order_id,batch_no,inv_date,currency,total_amount,total_qty,cartons,lines_json,packs_json,created_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,datetime('now','localtime'))""",
             (doc_id, data.get("invoice_no"), data.get("order_id"), data.get("batch_no"),
              data.get("inv_date"), data.get("currency"), data.get("total_amount", 0),
              data.get("total_qty", 0), data.get("cartons", 0),
              json.dumps(data.get("lines", [])), json.dumps(data.get("packs", []))))
-    # Update order status
-    o = load_order(data["order_id"])
-    new_status = compute_order_status(o)
-    if new_status != o["status"]:
-        with db() as c: c.execute("UPDATE orders SET status=? WHERE order_id=?", (new_status, data["order_id"]))
     return jsonify({"ok": True, "invoice_no": data.get("invoice_no")})
 
 # ═══════════════════════════════════════════════════════════
@@ -278,7 +281,8 @@ def api_create_shipment():
                 qty, shipped = row["quantity"], row["shipped_qty"]
                 new_st = "shipped" if shipped >= qty else ("partial" if shipped > 0 else "pending")
                 c.execute("UPDATE order_lines SET status=? WHERE line_id=?", (new_st, sl["order_line_id"]))
-        c.execute("""INSERT INTO shipments VALUES (?,?,?,?,?,?,?,?,?,?,strftime('%s','now'))""",
+        c.execute("""INSERT INTO shipments (shipment_id,order_id,shipment_no,ship_date,carrier,tracking_no,port_loading,port_discharge,container_no,seal_no,status,lines_json,nodes_json,created_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,strftime('%s','now'))""",
             (sid, data.get("order_id"), data.get("shipment_no"), data.get("ship_date"),
              data.get("carrier"), data.get("tracking_no"), data.get("port_loading"),
              data.get("port_discharge"), data.get("container_no"), data.get("seal_no"),
@@ -341,7 +345,8 @@ def api_create_payment():
     data = request.get_json()
     pid = data.get("payment_id") or ("p" + uuid.uuid4().hex[:10])
     with db() as c:
-        c.execute("""INSERT INTO payments VALUES (?,?,?,?,?,?,?,?,strftime('%s','now'))""",
+        c.execute("""INSERT INTO payments (payment_id,order_id,amount,currency,method,received_date,bank_reference,note,allocated_json,created_at)
+            VALUES (?,?,?,?,?,?,?,?,?,strftime('%s','now'))""",
             (pid, data.get("order_id"), data.get("amount", 0), data.get("currency"),
              data.get("method"), data.get("received_date"), data.get("bank_reference"),
              data.get("note"),

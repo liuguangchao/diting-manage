@@ -206,8 +206,18 @@ tr:hover td{background:var(--g50)}.num{text-align:right;font-variant-numeric:tab
     <div class="modal-bd">
       <input type="hidden" id="docOrderId">
       <div class="form-row">
-        <div class="fg"><label>批次编号</label><input type="text" id="batchNo" placeholder="如 01，自动生成 INV-xxx-01"></div>
+        <div class="fg"><label>发票号 (完整)</label><input type="text" id="invNoFull" placeholder="留空则自动生成"></div>
+        <div class="fg"><label>批次编号</label><input type="text" id="batchNo" placeholder="如 01"></div>
         <div class="fg"><label>发票日期</label><input type="date" id="invDate"></div>
+        <div class="fg"><label>自动前缀</label><input type="text" id="invNoPrefix" value="INV" placeholder="INV"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>卖方公司名</label><input type="text" id="sellerName" placeholder="YOUR COMPANY NAME"></div>
+        <div class="fg"><label>卖方地址</label><input type="text" id="sellerAddr" placeholder="Your Company Address"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>买方 (TO)</label><input type="text" id="buyerInfo" placeholder="买方名称/地址"></div>
+        <div class="fg"><label>PO号</label><input type="text" id="poNoDisp"></div>
       </div>
       <div style="margin:12px 0 8px;font-weight:600;font-size:13px">选择本批出货行项目（自动填剩余未发数量）</div>
       <div id="docLineSelector" style="border:1px solid var(--g200);border-radius:8px;overflow:hidden;margin-bottom:12px"></div>
@@ -419,6 +429,7 @@ async function saveAll(){ await loadAll(); }
 //  INCREMENT 1: ORDERS
 // ═══════════════════════════════════════════════════════════
 let _lineItemsBuffer=[];
+let _docSeller={name:"YOUR COMPANY NAME",addr:"Your Company Address"};
 let _packItemsBuffer=[];
 
 function openCreateOrderModal(){
@@ -521,6 +532,27 @@ function updateOrderStatus(o){
   else if(lines.some(l=>l.status==="confirmed"))o.status="confirmed";
 }
 
+function openOrderStatusModal(orderId){
+  const o=orders.find(x=>x.order_id===orderId);if(!o)return;
+  const MAIN_OPTIONS=["draft","confirmed","producing","pending","partial","shipped","done","cancelled"];
+  const MAIN_LABELS={draft:"草稿",confirmed:"已确认",producing:"执行中",pending:"待出运",partial:"部分出运",shipped:"已出运",done:"已完成",cancelled:"已取消"};
+  let opts="";
+  MAIN_OPTIONS.forEach(s=>{opts+=`<option value="${s}" ${s===o.status?"selected":""}>${MAIN_LABELS[s]}</option>`});
+  const html=`<select onchange="setOrderStatus('${orderId}',this.value)">${opts}</select>
+    <div style="margin-top:8px;font-size:11px;color:var(--g400)">选择状态后自动保存并刷新列表</div>`;
+  const modal=document.createElement("div");
+  modal.className="modal-ov open";modal.id="orderStatusModal";
+  modal.innerHTML=`<div class="modal" style="max-width:300px"><div class="modal-hd"><h3>更改主档状态</h3><button class="btn btn-s btn-o" onclick="closeModal('orderStatusModal')">✕</button></div><div class="modal-bd">${html}</div></div>`;
+  document.body.appendChild(modal);
+}
+function setOrderStatus(orderId,status){
+  const o=orders.find(x=>x.order_id===orderId);if(!o)return;
+  o.status=status;
+  api("PATCH","/api/orders/"+o.order_id,{status:status}).then(async()=>{
+    await loadAll();closeModal("orderStatusModal");renderOrders();
+  }).catch(e=>alert("保存失败: "+e.message));
+}
+
 function openStatusModal(orderId,lineId){
   const o=orders.find(x=>x.order_id===orderId);if(!o)return;
   const l=o.lines.find(x=>x.line_id===lineId);if(!l)return;
@@ -597,8 +629,9 @@ function renderOrders(){
       <td style="font-size:12px">${esc(o.incoterms||"—")} ${esc(o.incoterms_place||"")}</td>
       <td style="min-width:220px">${linesHtml}</td>
       <td class="num">${fmt(o.total_amount)}</td>
-      <td><span class="st ${statusClass}">${MAIN_STATUS_LABEL[o.status]||o.status}</span></td>
+      <td><span class="st ${statusClass}" style="cursor:pointer" onclick="openOrderStatusModal('${o.order_id}')" title="点击更改主档状态">${MAIN_STATUS_LABEL[o.status]||o.status}</span></td>
       <td style="white-space:nowrap">
+        <button class="btn btn-s btn-p btn-i" onclick="openOrderStatusModal('${o.order_id}')" title="更改主档状态">⚙</button>
         <button class="btn btn-s btn-o btn-i" onclick="openEditOrderModal('${o.order_id}')" title="编辑">✏</button>
         <button class="btn btn-s btn-p btn-i" onclick="openDocModal('${o.order_id}')" title="生成单证">📄</button>
         <button class="btn btn-s btn-o btn-i" onclick="openShipModal('${o.order_id}')" title="创建出运">🚢</button>
@@ -630,8 +663,20 @@ function openDocModal(orderId){
   document.getElementById("docModalTitle").textContent=`生成单证 — ${o.po_number}`;
   document.getElementById("batchNo").value=nextNo;
   document.getElementById("invDate").value=new Date().toISOString().slice(0,10);
+  document.getElementById("invNoPrefix").value="INV";
+  document.getElementById("sellerName").value=_docSeller.name;
+  document.getElementById("sellerAddr").value=_docSeller.addr;
+  document.getElementById("buyerInfo").value=o.buyer_id||"";
+  document.getElementById("poNoDisp").value=o.po_number;
+  ["batchNo","invDate","invNoFull","invNoPrefix","sellerName","sellerAddr","buyerInfo","poNoDisp"].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.oninput=updateDocPreview;
+  });
 
-  _docLinesBuffer=shipped.map(l=>({line_id:l.line_id,sku:l.sku,product_name:l.product_name,description:l.description,quantity:l.quantity,shipped_qty:l.shipped_qty,unit_price:l.unit_price,hs_code:l.hs_code,actualQty:Math.max(l.quantity-(l.shipped_qty||0),0)}));
+  _docLinesBuffer=shipped.map(l=>{
+    const rem=Math.max(l.quantity-(l.shipped_qty||0),0);
+    return {line_id:l.line_id,sku:l.sku||"",product_name:l.product_name||"",description:l.description||"",
+      quantity:l.quantity||0,shipped_qty:rem,unit_price:l.unit_price||0,hs_code:l.hs_code||"",actualQty:rem};
+  });
   _packBuffer=[];
   addPackRow();
   renderDocLineSelector();
@@ -709,21 +754,26 @@ function buildDocContext(){
   const totalGross=_packBuffer.reduce((s,p)=>s+(p.gross||0),0);
   const totalNet=_packBuffer.reduce((s,p)=>s+(p.net||0),0);
   const totalVol=_packBuffer.reduce((s,p)=>s+(p.vol||0),0);
-  const invNo="INV-"+o.order_id.slice(-6)+"-"+(document.getElementById("batchNo").value||"01");
+  const invNoFull=document.getElementById("invNoFull")?.value||"";
+  const prefix=document.getElementById("invNoPrefix").value||"INV";
+  const batch=document.getElementById("batchNo").value||"01";
+  const invNo=invNoFull || (prefix+"-"+o.order_id.slice(-6)+"-"+batch);
   const invDate=document.getElementById("invDate").value;
-  const sellerName="YOUR COMPANY NAME";
-  const sellerAddr="Your Company Address";
-  return {o,totalQty,totalAmount,totalCartons,totalPcs,totalGross,totalNet,totalVol,invNo,invDate,sellerName,sellerAddr};
+  const sellerName=document.getElementById("sellerName").value||"YOUR COMPANY NAME";
+  const sellerAddr=document.getElementById("sellerAddr").value||"Your Company Address";
+  const buyerInfo=document.getElementById("buyerInfo").value||o.buyer_id||"—";
+  const poNo=document.getElementById("poNoDisp").value||o.po_number;
+  return {o,totalQty,totalAmount,totalCartons,totalPcs,totalGross,totalNet,totalVol,invNo,invDate,sellerName,sellerAddr,buyerInfo,poNo};
 }
 
 function renderCI(ctx){
   const o=ctx.o;
   let h=`<div class="doc-preview" id="docContent">
     <h2>COMMERCIAL INVOICE</h2>
-    <div style="text-align:center;font-size:12px;margin-bottom:8px">${ctx.sellerName} | ${ctx.sellerAddr}</div>
+    <div style="text-align:center;font-size:12px;margin-bottom:8px">${esc(ctx.sellerName)} | ${esc(ctx.sellerAddr)}</div>
     <div class="addr-row">
-      <div><strong>TO:</strong><br>${esc(o.buyer_id||"—")}</div>
-      <div><strong>INVOICE NO.:</strong> ${ctx.invNo}<br><strong>DATE:</strong> ${ctx.invDate}<br><strong>PO NO.:</strong> ${esc(o.po_number)}</div>
+      <div><strong>TO:</strong><br>${esc(ctx.buyerInfo||"—")}</div>
+      <div><strong>INVOICE NO.:</strong> ${esc(ctx.invNo)}<br><strong>DATE:</strong> ${esc(ctx.invDate)}<br><strong>PO NO.:</strong> ${esc(ctx.poNo)}</div>
     </div>
     <div><strong>TERMS:</strong> ${esc(o.incoterms||"—")} ${esc(o.incoterms_place||"")} | <strong>PAYMENT:</strong> ${esc(o.payment_method||"—")} | <strong>CURRENCY:</strong> ${esc(o.currency)}</div>
     <table><thead><tr><th>SKU</th><th>DESCRIPTION</th><th>HS CODE</th><th>QTY</th><th>UNIT PRICE</th><th>AMOUNT</th></tr></thead><tbody>`;
@@ -742,10 +792,10 @@ function renderPL(ctx){
   const o=ctx.o;
   let h=`<div class="doc-preview" id="docContent">
     <h2>PACKING LIST</h2>
-    <div style="text-align:center;font-size:12px;margin-bottom:8px">${ctx.sellerName} | ${ctx.sellerAddr}</div>
+    <div style="text-align:center;font-size:12px;margin-bottom:8px">${esc(ctx.sellerName)} | ${esc(ctx.sellerAddr)}</div>
     <div class="addr-row">
-      <div><strong>TO:</strong><br>${esc(o.buyer_id||"—")}</div>
-      <div><strong>INVOICE NO.:</strong> ${ctx.invNo}<br><strong>DATE:</strong> ${ctx.invDate}<br><strong>PO NO.:</strong> ${esc(o.po_number)}</div>
+      <div><strong>TO:</strong><br>${esc(ctx.buyerInfo||"—")}</div>
+      <div><strong>INVOICE NO.:</strong> ${esc(ctx.invNo)}<br><strong>DATE:</strong> ${esc(ctx.invDate)}<br><strong>PO NO.:</strong> ${esc(ctx.poNo)}</div>
     </div>
     <div><strong>TERMS:</strong> ${esc(o.incoterms||"—")} ${esc(o.incoterms_place||"")}</div>
     <table><thead><tr><th>CTN NO.</th><th>PACKAGE</th><th>DESCRIPTION</th><th>PCS</th><th>GROSS WT (kg)</th><th>NET WT (kg)</th><th>VOL (m³)</th></tr></thead><tbody>`;
@@ -806,17 +856,6 @@ function updateDocPreview(){
 
 function saveDocument(){
   const ctx=buildDocContext();if(!ctx)return;
-  // Deduct shipped_qty from order lines
-  _docLinesBuffer.forEach(l=>{
-    const orderLine=ctx.o.lines.find(x=>x.line_id===l.line_id);
-    if(orderLine){
-      orderLine.shipped_qty=(orderLine.shipped_qty||0)+(l.shipped_qty||0);
-      if(orderLine.shipped_qty>=orderLine.quantity)orderLine.status="shipped";
-      else if(orderLine.shipped_qty>0)orderLine.status="partial";
-    }
-  });
-  updateOrderStatus(ctx.o);
-
   const doc={
     doc_id:genId(),
     invoice_no:ctx.invNo,
@@ -837,7 +876,14 @@ function saveDocument(){
 
 function exportCurrentDoc(){
   updateDocPreview();
-  setTimeout(()=>window.print(),300);
+  const ctx=buildDocContext();
+  if(!ctx)return;
+  const content=_docTab==="pl" ? renderPL(ctx) : renderCI(ctx);
+  const label=_docTab==="pl" ? "PACKING LIST" : "COMMERCIAL INVOICE";
+  const styles=document.querySelector('style').innerHTML;
+  const w=window.open("","_blank");
+  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+label+' - '+ctx.invNo+'</title><style>'+styles+'@media print{body{margin:0}}</style></head><body>'+content+'<script>window.onload=function(){setTimeout(function(){window.print();setTimeout(function(){window.close()},500)},300)}<\/script></body></html>');
+  w.document.close();
 }
 
 function openDocHistory(orderId){
@@ -858,17 +904,15 @@ function openDocHistory(orderId){
 
 function viewDocOnly(docId){
   const d=documents.find(x=>x.doc_id===docId);if(!d)return;
-  const o=orders.find(x=>x.order_id===d.order_id);
-  const ctx={
-    o,totalQty:d.total_qty,totalAmount:d.total_amount,totalCartons:d.cartons,
-    totalPcs:d.packs.reduce((s,p)=>s+(p.qty||0),0),
-    totalGross:d.packs.reduce((s,p)=>s+(p.gross||0),0),
-    totalNet:d.packs.reduce((s,p)=>s+(p.net||0),0),
-    totalVol:d.packs.reduce((s,p)=>s+(p.vol||0),0),
-    invNo:d.invoice_no,invDate:d.inv_date,sellerName:"YOUR COMPANY NAME",sellerAddr:"Your Company Address"
-  };
-  _docLinesBuffer=d.lines.map(l=>({...l,actualQty:l.shipped_qty,shipped_qty:l.shipped_qty}));
-  _packBuffer=d.packs.map(p=>({...p}));
+  const o=orders.find(x=>x.order_id===d.order_id);if(!o)return;
+  _docOrderId=d.order_id;
+  _docLinesBuffer=(d.lines||[]).map(l=>({line_id:l.line_id,sku:l.sku||"",product_name:l.product_name||"",description:l.description||"",quantity:l.quantity||0,shipped_qty:l.shipped_qty||l.actualQty||0,unit_price:l.unit_price||0,hs_code:l.hs_code||"",actualQty:l.shipped_qty||l.actualQty||0}));
+  _packBuffer=(d.packs||[]).map(p=>({...p}));
+  const invNoFull=document.getElementById("invNoFull");if(invNoFull)invNoFull.value=d.invoice_no||"";
+  const invDate=document.getElementById("invDate");if(invDate)invDate.value=d.inv_date||"";
+  const batchNo=document.getElementById("batchNo");if(batchNo)batchNo.value=d.batch_no||"01";
+  const poNoDisp=document.getElementById("poNoDisp");if(poNoDisp)poNoDisp.value=o.po_number||"";
+  const buyerInfo=document.getElementById("buyerInfo");if(buyerInfo)buyerInfo.value=o.buyer_id||"";
   openModal("docModal");
   document.getElementById("docModalTitle").textContent="查看单证 — "+d.invoice_no;
   switchDocTab("ci");
@@ -970,7 +1014,7 @@ function renderShipments(){
       <td style="font-size:12px">${esc(s.ship_date||"—")}</td>
       <td style="font-size:12px">${esc(s.carrier||"—")}</td>
       <td style="font-size:12px">${esc(s.tracking_no||"—")}</td>
-      <td style="font-size:12px">${esc(s.port_of_loading||"—")} → ${esc(s.port_of_discharge||"—")}</td>
+      <td style="font-size:12px">${esc(s.port_loading||"—")} → ${esc(s.port_discharge||"—")}</td>
       <td style="font-size:11px;color:var(--g500)">${esc(s.container_no||"—")} / ${esc(s.seal_no||"—")}</td>
       <td style="font-size:11px">${lines}</td>
       <td><span class="ship-status ${s.status}">${SHIP_STATUS_LABEL[s.status]||s.status}</span></td>
@@ -1069,7 +1113,7 @@ function onPayOrderChange(){
     const remaining=total-received;
     const st=remaining<=0?"paid":(received>0?"partial":"unpaid");
     return `<label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer;font-size:13px">
-      <input type="checkbox" class="payInvCb" value="${d.invoice_no}" ${remaining>0?"checked disabled":""}>
+      <input type="checkbox" class="payInvCb" value="${d.invoice_no}" ${remaining<=0?"disabled":""}>
       <strong>${esc(d.invoice_no)}</strong>
       <span class="pay-st ${st}">${st==="paid"?"已收清":st==="partial"?"部分收":"未收"}</span>
       <span style="font-size:11px;color:var(--g500)">应收 ${fmt(total)} / 已收 ${fmt(received)}${remaining>0?" / 剩余 "+fmt(remaining):""}</span>

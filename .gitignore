@@ -16,3 +16,7 @@ __pycache__/
 # IDE
 .vscode/
 .idea/
+
+# Server
+server.log
+uploads/

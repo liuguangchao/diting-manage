@@ -103,6 +103,7 @@ tr:hover td{background:var(--g50)}.num{text-align:right;font-variant-numeric:tab
     <button class="tab-btn" data-page="shipments" onclick="switchPage('shipments')">出运跟踪</button>
     <button class="tab-btn" data-page="payments" onclick="switchPage('payments')">收付款</button>
     <button class="tab-btn" data-page="profit" onclick="switchPage('profit')">利润看板</button>
+    <button class="tab-btn" data-page="customers" onclick="switchPage('customers')">客户管理</button>
   </div>
   <div class="stats" id="stats"></div>
   <div id="pageOrders">
@@ -146,8 +147,85 @@ tr:hover td{background:var(--g50)}.num{text-align:right;font-variant-numeric:tab
     <div class="stats" id="profitStats"></div>
     <div class="card"><div class="card-hd"><h2>订单利润明细</h2><button class="btn btn-s btn-o" onclick="openCostModal()">✏ 录入成本</button></div><div id="profitList"></div></div>
   </div>
+
+  <!-- Customers Page -->
+  <div id="pageCustomers" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <div class="filter-bar">
+        <input type="text" id="custSearch" placeholder="搜索客户代码 / 公司名 / 国家…" oninput="filterCustomers()">
+        <select id="custTypeFilter" onchange="filterCustomers()"><option value="">全部类型</option><option value="终端客户">终端客户</option><option value="贸易商">贸易商</option><option value="分销商">分销商</option><option value="代理商">代理商</option></select>
+        <select id="custStatusFilter" onchange="filterCustomers()"><option value="">全部状态</option><option value="active">活跃</option><option value="paused">暂停</option><option value="blacklist">黑名单</option></select>
+      </div>
+      <button class="btn btn-p btn-s" onclick="openCustomerModal()">＋ 新建客户</button>
+    </div>
+    <div class="card"><div class="card-hd"><h2>客户列表</h2></div><div id="custList"></div></div>
+  </div>
 </div>
 
+
+<!-- Customer Modal -->
+<div class="modal-ov" id="customerModal">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3 id="custModalTitle">新建客户</h3>
+      <button class="btn btn-s btn-o" onclick="closeModal('customerModal')">&#10005;</button>
+    </div>
+    <div class="modal-bd" style="max-height:70vh;overflow-y:auto">
+      <input type="hidden" id="custId" value="">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div><label style="font-size:11px;color:var(--g500)">客户编码</label><input type="text" id="custCode" placeholder="CUST-001" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"></div>
+        <div><label style="font-size:11px;color:var(--g500)">客户类型</label><select id="custType" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"><option>终端客户</option><option>经销商</option><option>代理商</option><option>其他</option></select></div>
+      </div>
+      <div style="margin-bottom:10px"><label style="font-size:11px;color:var(--g500)">公司全称（必填）</label><input type="text" id="custName" placeholder="ABC Trading Co., Ltd." style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"></div>
+      <div style="margin-bottom:10px"><label style="font-size:11px;color:var(--g500)">公司中文名称</label><input type="text" id="custNameCn" placeholder="ABC 贸易有限公司" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+        <div><label style="font-size:11px;color:var(--g500)">国家</label><input type="text" id="custCountry" placeholder="USA" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"></div>
+        <div><label style="font-size:11px;color:var(--g500)">州/省</label><input type="text" id="custState" placeholder="California" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"></div>
+        <div><label style="font-size:11px;color:var(--g500)">城市</label><input type="text" id="custCity" placeholder="Los Angeles" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"></div>
+      </div>
+      <div style="margin-bottom:10px"><label style="font-size:11px;color:var(--g500)">地址 1</label><input type="text" id="custAddr1" placeholder="123 Main St" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div><label style="font-size:11px;color:var(--g500)">地址 2</label><input type="text" id="custAddr2" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"></div>
+        <div><label style="font-size:11px;color:var(--g500)">邮编</label><input type="text" id="custPostal" placeholder="90001" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div><label style="font-size:11px;color:var(--g500)">税号 / EIN</label><input type="text" id="custTaxId" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"></div>
+        <div><label style="font-size:11px;color:var(--g500)">网站</label><input type="url" id="custWebsite" placeholder="https://..." style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+        <div><label style="font-size:11px;color:var(--g500)">付款条款</label><input type="text" id="custPayTerms" placeholder="T/T 30%" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"></div>
+        <div><label style="font-size:11px;color:var(--g500)">默认贸易条款</label><select id="custIncoterms" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"><option value="">--</option><option>EXW</option><option>FCA</option><option>CIF</option><option>FOB</option><option>CFR</option><option>DDP</option><option>DAP</option></select></div>
+        <div><label style="font-size:11px;color:var(--g500)">默认币种</label><select id="custCurrency" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"><option>USD</option><option>EUR</option><option>GBP</option><option>JPY</option><option>CNY</option><option>AUD</option></select></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div><label style="font-size:11px;color:var(--g500)">信用额度</label><input type="number" id="custCredit" step="0.01" placeholder="100000" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"></div>
+        <div><label style="font-size:11px;color:var(--g500)">状态</label><select id="custStatus" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"><option value="active">活跃</option><option value="inactive">停用</option><option value="blacklist">黑名单</option></select></div>
+      </div>
+      <div style="margin-bottom:10px"><label style="font-size:11px;color:var(--g500)">备注</label><textarea id="custNote" rows="2" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px;resize:vertical"></textarea></div>
+      <!-- 联系人区 -->
+      <div style="margin-bottom:12px;border:1px solid var(--g300);border-radius:6px;padding:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:12px;font-weight:600">联系人</span>
+          <button class="btn btn-s" onclick="addContact()" style="font-size:11px">&#xFF0B; 添加联系人</button>
+        </div>
+        <div id="contactListBody"></div>
+      </div>
+      <!-- 附件区 -->
+      <div style="border:1px solid var(--g300);border-radius:6px;padding:10px" id="custDocSection">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:12px;font-weight:600">附件</span>
+          <button class="btn btn-s" onclick="uploadCustDoc()" style="font-size:11px">&#xFF0B; 上传附件</button>
+        </div>
+        <input type="file" id="custDocUploadInput" style="display:none" onchange="doUploadCustDoc()">
+        <div id="custDocList"></div>
+      </div>
+    </div>
+    <div class="modal-ft" style="display:flex;justify-content:flex-end;gap:8px;padding:10px 16px;border-top:1px solid var(--g200)">
+      <button class="btn btn-o" onclick="closeModal('customerModal')">取消</button>
+      <button class="btn btn-p" onclick="saveCustomer()">保存</button>
+    </div>
+  </div>
+</div>
 <!-- Order Modal -->
 <div class="modal-ov" id="orderModal">
   <div class="modal">
@@ -156,7 +234,8 @@ tr:hover td{background:var(--g50)}.num{text-align:right;font-variant-numeric:tab
       <input type="hidden" id="editOrderId">
       <div class="form-row">
         <div class="fg"><label>客户 PO 号 *</label><input type="text" id="poNumber" placeholder="如 PO-2025-001"></div>
-        <div class="fg"><label>买家</label><input type="text" id="buyerId" placeholder="买家名称"></div>
+        <div class="fg"><label>关联客户</label><select id="orderCustomer" onchange="onCustomerSelect()"><option value="">— 手动填写 —</option></select></div>
+        <div class="fg"><label>买家</label><input type="text" id="buyerId" placeholder="买家名称（关联客户后自动填充）"></div>
         <div class="fg"><label>币种</label><select id="currency"><option>USD</option><option>EUR</option><option>CNY</option><option>GBP</option><option>JPY</option></select></div>
       </div>
       <div class="form-row">
@@ -331,7 +410,9 @@ tr:hover td{background:var(--g50)}.num{text-align:right;font-variant-numeric:tab
       <div class="form-row">
         <div class="fg"><label>关联订单</label><select id="costOrderId"></select></div>
         <div class="fg"><label>币种</label><select id="costCurrency"><option>CNY</option><option>USD</option><option>EUR</option><option>GBP</option><option>JPY</option></select></div>
+        <div class="fg"><label>记账汇率</label><input type="number" step="0.0001" id="costFxRate" placeholder="默认用全局汇率"></div>
       </div>
+      <div style="font-size:11px;color:var(--g400);margin-bottom:12px">不填则使用全局记账汇率；填写后该订单使用独立汇率折算。</div>
       <div style="margin:12px 0 8px;font-weight:600;font-size:13px">成本明细（按类别汇总）</div>
       <div id="costEditor" style="border:1px solid var(--g200);border-radius:8px;overflow:hidden"></div>
     </div>
@@ -404,7 +485,7 @@ function canTransition(from,to){
 //  API LAYER (Flask + SQLite backend)
 // ═══════════════════════════════════════════════════════════
 const API="";
-let orders=[], documents=[], shipments=[], payments=[], costRecords=[], fxConfig={USD:7.2};
+let orders=[], documents=[], shipments=[], payments=[], costRecords=[], fxConfig={USD:7.2}, customers=[], customerContacts=[];
 
 async function api(method, path, body){
   const opt={method,headers:{"Content-Type":"application/json"}};
@@ -420,6 +501,16 @@ async function loadAll(){
   payments=await api("GET","/api/payments");
   costRecords=await api("GET","/api/costs");
   fxConfig=await api("GET","/api/fx");
+  customers=await api("GET","/api/customers");
+  customerContacts=[];
+  for(const c of customers){
+    try{
+      const detail=await api("GET","/api/customers/"+c.customer_id);
+      if(detail.contacts)customerContacts.push(...detail.contacts);
+      c.contacts=detail.contacts||[];
+      c.docs=detail.docs||[];
+    }catch(e){/* skip */}
+  }
   if(!fxConfig.USD)fxConfig.USD=7.2;
 }
 async function saveAll(){ await loadAll(); }
@@ -435,6 +526,7 @@ let _packItemsBuffer=[];
 function openCreateOrderModal(){
   document.getElementById("editOrderId").value="";
   document.getElementById("modalTitle").textContent="新建订单";
+  _fillOrderCustomerSelect();
   document.getElementById("poNumber").value="";
   document.getElementById("buyerId").value="";
   document.getElementById("currency").value="USD";
@@ -509,6 +601,7 @@ function openEditOrderModal(id){
   document.getElementById("modalTitle").textContent="编辑订单";
   document.getElementById("poNumber").value=o.po_number;
   document.getElementById("buyerId").value=o.buyer_id||"";
+  _fillOrderCustomerSelect(o.buyer_id);
   document.getElementById("currency").value=o.currency;
   document.getElementById("incoterms").value=o.incoterms||"";
   document.getElementById("incotermsPlace").value=o.incoterms_place||"";
@@ -931,12 +1024,14 @@ const SHIP_STATUS_LABEL={booked:"已订舱",loaded:"已装箱",onboard:"已装�
 
 function switchPage(page){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle("active",b.dataset.page===page));
-  ["orders","shipments","payments","profit"].forEach(p=>{
-    document.getElementById("page"+p.charAt(0).toUpperCase()+p.slice(1)).style.display=(p===page)?"":"none";
+  ["orders","shipments","payments","profit","customers"].forEach(p=>{
+    const el=document.getElementById("page"+p.charAt(0).toUpperCase()+p.slice(1));
+    if(el)el.style.display=(p===page)?"":"none";
   });
   if(page==="shipments")renderShipments();
   if(page==="payments")renderPayments();
   if(page==="profit")renderProfit();
+  if(page==="customers")renderCustomers();
 }
 
 function openShipModal(orderId){
@@ -1206,6 +1301,7 @@ function renderPayments(){
 function openCostModal(){
   document.getElementById("costOrderId").innerHTML=orders.map(o=>`<option value="${o.order_id}">${esc(o.po_number)} — ${esc(o.buyer_id||"")}</option>`).join("");
   document.getElementById("costCurrency").value="CNY";
+  document.getElementById("costFxRate").value="";
   openModal("costModal");
   document.getElementById("costOrderId").onchange=onCostOrderChange;
   onCostOrderChange();
@@ -1216,6 +1312,8 @@ function onCostOrderChange(){
   const existing=costRecords.find(c=>c.order_id===oid)||{costs:[]};
   const o=orders.find(x=>x.order_id===oid);
   const cifLike=["CIF","CIP","CFR"].includes(o?.incoterms||"");
+  document.getElementById("costCurrency").value=existing.currency||"CNY";
+  document.getElementById("costFxRate").value=(existing.fx_rate!=null&&existing.fx_rate!=="")?existing.fx_rate:"";
   const ed=document.getElementById("costEditor");
   let h=`<div class="cost-row hd"><div>类别</div><div>金额</div><div>备注</div><div></div></div>`;
   COST_CATEGORIES.forEach(cat=>{
@@ -1234,29 +1332,50 @@ function onCostOrderChange(){
 function saveCosts(){
   const oid=document.getElementById("costOrderId").value;
   const currency=document.getElementById("costCurrency").value;
+  const fxRateVal=document.getElementById("costFxRate").value.trim();
+  const fx_rate=fxRateVal!==""?parseFloat(fxRateVal):null;
   const costs=COST_CATEGORIES.map(cat=>({
     category:cat.key,
     amount:parseFloat(document.getElementById("cost_"+cat.key).value)||0,
     note:document.getElementById("costNote_"+cat.key).value
   })).filter(c=>c.amount>0||c.note);
-  api("POST","/api/costs",{order_id:oid,currency:currency,costs:costs}).then(async()=>{await loadAll();closeModal("costModal");renderProfit();alert("成本已保存");}).catch(e=>alert("保存失败: "+e.message));
+  api("POST","/api/costs",{order_id:oid,currency:currency,fx_rate:fx_rate,costs:costs}).then(async()=>{await loadAll();closeModal("costModal");renderProfit();alert("成本已保存");}).catch(e=>alert("保存失败: "+e.message));
 }
 
 function getOrderCosts(orderId){
   const rec=costRecords.find(c=>c.order_id===orderId);
   if(!rec)return 0;
-  return rec.costs.reduce((sum,c)=>sum+(c.amount||0),0)*getFxRate(rec.currency);
+  const rate=(rec.fx_rate!=null&&rec.fx_rate!=="")?rec.fx_rate:getFxRate(rec.currency);
+  return rec.costs.reduce((sum,c)=>sum+(c.amount||0),0)*rate;
 }
 
-function getOrderRevenue(orderId){
+function getOrderRevenue(orderId,rate){
   const docs=documents.filter(d=>d.order_id===orderId);
+  const o=orders.find(x=>x.order_id===orderId);
   if(!docs.length){
-    const o=orders.find(x=>x.order_id===orderId);
     return o?o.total_amount||0:0;
   }
   let total=0;
-  docs.forEach(d=>{total+=(d.total_amount||0)*getFxRate(d.currency||"USD")});
+  docs.forEach(d=>{
+    if(rate!=null){total+=(d.total_amount||0)*rate;}
+    else{total+=(d.total_amount||0)*getFxRate(d.currency||"USD");}
+  });
   return total;
+}
+
+function getOrderFxRate(orderId){
+  const rec=costRecords.find(c=>c.order_id===orderId);
+  if(rec&&(rec.fx_rate!=null&&rec.fx_rate!==""))return rec.fx_rate;
+  return getFxRate("USD");
+}
+
+function saveRowFxRate(orderId){
+  const rec=costRecords.find(c=>c.order_id===orderId);
+  const cur=document.getElementById("rowFx_"+orderId)?.value.trim();
+  const rate=cur===""?null:parseFloat(cur);
+  if(rate!=null&&isNaN(rate)){alert("汇率格式不正确");return;}
+  const payload={order_id:orderId, currency: rec?.currency||"CNY", fx_rate:rate, costs:(rec?.costs||[])};
+  api("POST","/api/costs",payload).then(async()=>{await loadAll();renderProfit();alert("该订单独立汇率已保存");}).catch(e=>alert("保存失败: "+e.message));
 }
 
 // --- PROFIT ---
@@ -1285,16 +1404,22 @@ function renderProfit(){
     <div class="stat-card"><div class="lbl">已收总额</div><div class="val">${fmt(totalReceived)}</div></div>`;
 
   let h=`<div style="overflow-x:auto"><table><thead><tr>
-    <th>PO号</th><th>客户</th><th>币种</th><th>订单收入</th><th>成本(折算)</th><th>毛利</th><th>毛利率</th>
+    <th>PO号</th><th>客户</th><th>币种</th><th>汇率(可改)</th><th>订单收入</th><th>成本(折算)</th><th>毛利</th><th>毛利率</th>
     </tr></thead><tbody>`;
   for(const o of filtered){
-    const revenue=getOrderRevenue(o.order_id);
+    const rec=costRecords.find(c=>c.order_id===o.order_id);
+    const hasFxRate=rec&&(rec.fx_rate!=null&&rec.fx_rate!=="");
+    const rowRate=hasFxRate?rec.fx_rate:getOrderFxRate(o.order_id);
+    const revenue=getOrderRevenue(o.order_id,rowRate);
     const cost=getOrderCosts(o.order_id);
     const profit=revenue-cost;
     const margin=revenue>0?(profit/revenue*100):0;
     const cls=profit>=0?"profit-pos":"profit-neg";
+    const fxTag=hasFxRate?`<span style="font-size:10px;color:var(--g400);margin-left:4px">独立</span>`:"";
     h+=`<tr><td><strong>${esc(o.po_number)}</strong></td><td>${esc(o.buyer_id||"—")}</td>
-      <td>${esc(o.currency)}</td><td class="num">${fmt(revenue)}</td>
+      <td>${esc(o.currency)}</td>
+      <td><input type="number" step="0.0001" id="rowFx_${o.order_id}" value="${typeof rowRate==="number"?rowRate:(parseFloat(rowRate)||"")}" style="width:70px;padding:2px 4px;font-size:12px" onchange="saveRowFxRate('${o.order_id}')">${fxTag}</td>
+      <td class="num">${fmt(revenue)}</td>
       <td class="num">${cost?fmt(cost):"—"}</td>
       <td class="num ${cls}">${fmt(profit)}</td>
       <td class="num ${cls}">${cost?margin.toFixed(1)+"%":"—"}</td></tr>`;
@@ -1302,6 +1427,241 @@ function renderProfit(){
   h+=`</tbody></table></div>`;
   document.getElementById("profitList").innerHTML=filtered.length?h:`<div class="empty"><p>暂无订单</p></div>`;
 }
+
+// ═══════════════════════════════════════════════════════════
+//  INCREMENT 5: 客户管理 (CRM)
+// ═══════════════════════════════════════════════════════════
+function _fillOrderCustomerSelect(selectVal){
+  const sel=document.getElementById("orderCustomer");
+  if(!sel)return;
+  sel.innerHTML='<option value="">— 手动填写 —</option>'+customers.map(c=>`<option value="${esc(c.customer_id)}">${esc(c.company_name||c.customer_code||"")}</option>`).join("");
+  if(selectVal){
+    // 按 buyer_id（company_name 或 customer_code）匹配
+    const matched=customers.find(c=>(c.company_name||"")===selectVal||(c.customer_code||"")===selectVal);
+    sel.value=matched?matched.customer_id:"";
+    if(matched)onCustomerSelect();
+  }
+}
+
+function onCustomerSelect(){
+  const cid=document.getElementById("orderCustomer").value;
+  if(!cid){document.getElementById("buyerId").value="";return;}
+  const c=customers.find(x=>x.customer_id===cid);
+  if(!c)return;
+  document.getElementById("buyerId").value=c.company_name||c.customer_code||"";
+  if(c.default_currency)document.getElementById("currency").value=c.default_currency;
+  if(c.payment_terms)document.getElementById("paymentMethod").value=c.payment_terms;
+  if(c.default_incoterms)document.getElementById("incoterms").value=c.default_incoterms;
+}
+
+function openCustomerModal(cid){
+  const c=cid?customers.find(x=>x.customer_id===cid):null;
+  document.getElementById("custModalTitle").textContent=c?"编辑客户":"新建客户";
+  document.getElementById("custId").value=c?c.customer_id:"";
+  document.getElementById("custCode").value=c?.customer_code||"";
+  document.getElementById("custName").value=c?.company_name||"";
+  document.getElementById("custNameCn").value=c?.company_name_cn||"";
+  document.getElementById("custCountry").value=c?.country||"";
+  document.getElementById("custCity").value=c?.city||"";
+  document.getElementById("custState").value=c?.state_province||"";
+  document.getElementById("custAddr1").value=c?.address_line1||"";
+  document.getElementById("custAddr2").value=c?.address_line2||"";
+  document.getElementById("custPostal").value=c?.postal_code||"";
+  document.getElementById("custTaxId").value=c?.tax_id||"";
+  document.getElementById("custWebsite").value=c?.website||"";
+  document.getElementById("custType").value=c?.customer_type||"终端客户";
+  document.getElementById("custPayTerms").value=c?.payment_terms||"";
+  document.getElementById("custIncoterms").value=c?.default_incoterms||"";
+  document.getElementById("custCurrency").value=c?.default_currency||"USD";
+  document.getElementById("custCredit").value=c?.credit_limit||"";
+  document.getElementById("custStatus").value=c?.status||"active";
+  document.getElementById("custNote").value=c?.note||"";
+  _resetTempContacts(cid);
+  _renderTempContacts();
+  // 渲染附件
+  const docs=cid?(c.docs||[]):[];
+  document.getElementById("custDocList").innerHTML=docs.length?docs.map(d=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;font-size:12px">
+      <span>${esc(d.file_name||d.doc_type||"")}</span>
+      <button class="btn btn-s btn-o" style="font-size:10px" onclick="removeCustDoc('${d.doc_id}')">删除</button>
+    </div>`).join(""):'<div style="font-size:12px;color:var(--g400);padding:4px 0">暂无附件</div>';
+  // 隐藏上传 input 值
+  document.getElementById("custDocUploadInput").value="";
+  openModal("customerModal");
+}
+
+async function saveCustomer(){
+  const cid=document.getElementById("custId").value;
+  const payload={
+    customer_code:document.getElementById("custCode").value.trim(),
+    company_name:document.getElementById("custName").value.trim(),
+    company_name_cn:document.getElementById("custNameCn").value.trim(),
+    country:document.getElementById("custCountry").value.trim(),
+    city:document.getElementById("custCity").value.trim(),
+    state_province:document.getElementById("custState").value.trim(),
+    address_line1:document.getElementById("custAddr1").value.trim(),
+    address_line2:document.getElementById("custAddr2").value.trim(),
+    postal_code:document.getElementById("custPostal").value.trim(),
+    tax_id:document.getElementById("custTaxId").value.trim(),
+    website:document.getElementById("custWebsite").value.trim(),
+    customer_type:document.getElementById("custType").value,
+    payment_terms:document.getElementById("custPayTerms").value.trim(),
+    default_incoterms:document.getElementById("custIncoterms").value.trim(),
+    default_currency:document.getElementById("custCurrency").value,
+    credit_limit:parseFloat(document.getElementById("custCredit").value)||null,
+    status:document.getElementById("custStatus").value,
+    note:document.getElementById("custNote").value.trim()
+  };
+  if(!payload.company_name){alert("公司全称为必填项");return;}
+  if(cid){
+    await api("PUT","/api/customers/"+cid,payload);
+    await _persistTempContacts(cid);
+  }else{
+    const res=await api("POST","/api/customers",payload);
+    const newCid=res.customer_id||"";
+    if(newCid&&_tempContacts.length){
+      for(const ct of _tempContacts){
+        if(!ct.name)continue;
+        await api("POST","/api/customers/"+newCid+"/contacts",{...ct,contact_id:"ct_"+Date.now()+"_"+Math.random().toString(36).slice(2,6)}).catch(()=>{});
+      }
+    }
+  }
+  _tempContacts=[];
+  await loadAll();
+  closeModal("customerModal");
+  renderCustomers();
+  alert("客户已保存");
+}
+
+async function deleteCustomer(cid){
+  if(!confirm("确认删除该客户？关联的联系人和附件将一并删除。"))return;
+  await api("DELETE","/api/customers/"+cid);
+  await loadAll();
+  renderCustomers();
+}
+
+// 联系人 CRUD（在客户模态框内临时管理，保存客户时一并提交）
+let _tempContacts=[];
+
+function _resetTempContacts(cid){
+  _tempContacts=cid?customerContacts.filter(ct=>ct.customer_id===cid).map(ct=>({...ct})):[
+    // 新建客户默认一条空联系人
+    {contact_id:"new1",name:"",title:"",email:"",phone:"",whatsapp:"",is_primary:true,role:"采购"}
+  ];
+}
+
+function addContact(){
+  const cid=document.getElementById("custId").value;
+  if(!_tempContacts.length||cid)_tempContacts.push({contact_id:"new_"+Date.now(),name:"",title:"",email:"",phone:"",whatsapp:"",is_primary:_tempContacts.length===0,role:"采购"});
+  _renderTempContacts();
+}
+
+function _renderTempContacts(){
+  const body=document.getElementById("contactListBody");
+  if(!_tempContacts.length){body.innerHTML='<div style="font-size:12px;color:var(--g400);padding:8px 0">暂无联系人，点击"添加联系人"开始录入</div>';return;}
+  body.innerHTML=_tempContacts.map((ct,i)=>`
+    <div style="display:grid;grid-template-columns:1fr 1.2fr 1fr auto;gap:4px;align-items:center;padding:6px 0;border-bottom:1px solid var(--g200)">
+      <div><input type="text" placeholder="姓名" value="${esc(ct.name||"")}" oninput="_tempContacts[${i}].name=this.value" style="width:100%;font-size:12px;padding:3px 6px;border:1px solid var(--g300);border-radius:4px"></div>
+      <div><input type="text" placeholder="邮箱" value="${esc(ct.email||"")}" oninput="_tempContacts[${i}].email=this.value" style="width:100%;font-size:12px;padding:3px 6px;border:1px solid var(--g300);border-radius:4px"></div>
+      <div style="display:flex;gap:4px;align-items:center">
+        <input type="text" placeholder="角色" value="${esc(ct.role||"")}" oninput="_tempContacts[${i}].role=this.value" style="width:50px;font-size:11px;padding:2px 4px;border:1px solid var(--g300);border-radius:4px">
+        <label style="font-size:11px;display:flex;align-items:center;gap:2px"><input type="checkbox" ${ct.is_primary?"checked":""} onchange="_tempContacts[${i}].is_primary=this.checked">★</label>
+      </div>
+      <button class="btn btn-s btn-o" style="font-size:10px" onclick="_tempContacts.splice(${i},1);_renderTempContacts()">✕</button>
+    </div>`).join("");
+}
+
+async function _persistTempContacts(cid){
+  if(!cid)return; // 新建客户保存前先存客户，再存联系人
+  // 删除已不存在于 _tempContacts 的联系人
+  const existing=customerContacts.filter(ct=>ct.customer_id===cid);
+  const kept=_tempContacts.map(ct=>ct.contact_id);
+  for(const old of existing){
+    if(!kept.includes(old.contact_id)){
+      await api("DELETE","/api/customers/"+cid+"/contacts/"+old.contact_id).catch(()=>{});
+    }
+  }
+  // 新增/更新
+  for(const ct of _tempContacts){
+    const payload={...ct,is_primary:1===ct.is_primary||(true===ct.is_primary)};
+    if(old_contact_exists(cid,ct.contact_id)){
+      await api("PUT","/api/customers/"+cid+"/contacts/"+ct.contact_id,payload).catch(()=>{});
+    }else{
+      await api("POST","/api/customers/"+cid+"/contacts",{...payload,contact_id:ct.contact_id}).catch(()=>{});
+    }
+  }
+}
+
+function old_contact_exists(cid,contact_id){
+  return customerContacts.some(ct=>ct.customer_id===cid&&ct.contact_id===contact_id);
+}
+
+// 客户附件
+function uploadCustDoc(){
+  const inp=document.getElementById("custDocUploadInput");
+  if(inp)inp.click();
+}
+
+async function doUploadCustDoc(){
+  const inp=document.getElementById("custDocUploadInput");
+  const file=inp.files?.[0];
+  if(!file)return;
+  const cid=document.getElementById("custId").value;
+  if(!cid){alert("请先保存客户，再上传附件");return;}
+  const fd=new FormData();
+  fd.append("file",file);
+  fd.append("doc_type","其他");
+  const r=await fetch("/api/customers/"+cid+"/documents/upload",{method:"POST",body:fd});
+  if(!r.ok)throw new Error("上传失败");
+  await loadAll();
+  openCustomerModal(cid);
+  alert("附件已上传");
+}
+
+async function removeCustDoc(docId){
+  const cid=document.getElementById("custId").value;
+  await api("DELETE","/api/customers/"+cid+"/documents/"+docId);
+  await loadAll();
+  openCustomerModal(cid);
+}
+
+// 客户列表页
+function renderCustomers(){
+  const search=(document.getElementById("custSearch")?.value||"").toLowerCase();
+  const typeFilter=(document.getElementById("custTypeFilter")?.value||"");
+  const statusFilter=(document.getElementById("custStatusFilter")?.value||"");
+  let list=customers.slice();
+  if(search)list=list.filter(c=>(c.company_name||"").toLowerCase().includes(search)||(c.customer_code||"").toLowerCase().includes(search)||(c.country||"").toLowerCase().includes(search));
+  if(typeFilter)list=list.filter(c=>c.customer_type===typeFilter);
+  if(statusFilter)list=list.filter(c=>c.status===statusFilter);
+  const statusMap={active:"<span class='tag tag-s'>活跃</span>",paused:"<span class='tag tag-w'>暂停</span>",blacklist:"<span class='tag tag-r'>黑名单</span>"};
+  const h=list.length?`
+    <div style="overflow-x:auto"><table>
+      <thead><tr>
+        <th>客户代码</th><th>公司全称</th><th>国家</th><th>类型</th><th>状态</th>
+        <th>订单数</th><th>进行中</th><th>应收未收(USD)</th><th>最近沟通</th><th>操作</th>
+      </tr></thead><tbody>
+      ${list.map(c=>`<tr>
+        <td>${esc(c.customer_code||"—")}</td>
+        <td><strong>${esc(c.company_name||"")}</strong><br><span style="font-size:11px;color:var(--g500)">${esc(c.company_name_cn||"")}</span></td>
+        <td>${esc(c.country||"")}</td>
+        <td>${esc(c.customer_type||"")}</td>
+        <td>${statusMap[c.status]||esc(c.status||"")}</td>
+        <td class="num">${c.order_count||0}</td>
+        <td class="num">${c.active_order_count||0}</td>
+        <td class="num">${c.uncollected_amount?fmt(c.uncollected_amount):"—"}</td>
+        <td style="font-size:11px;color:var(--g500)">${c.last_comm_at?esc(c.last_comm_at):"从未"}</td>
+        <td>
+          <button class="btn btn-s btn-o" onclick="openCustomerModal('${c.customer_id}')">编辑</button>
+          <button class="btn btn-s btn-o" style="margin-left:4px;color:var(--r)" onclick="deleteCustomer('${c.customer_id}')">删除</button>
+        </td>
+      </tr>`).join("")}
+      </tbody>
+    </table></div>`:`<div class="empty"><p>暂无客户，点击"新建客户"开始</p></div>`;
+  document.getElementById("custList").innerHTML=h;
+}
+
+function filterCustomers(){renderCustomers();}
 
 // ═══════════════════════════════════════════════════════════
 //  BOOT

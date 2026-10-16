@@ -104,6 +104,8 @@ tr:hover td{background:var(--g50)}.num{text-align:right;font-variant-numeric:tab
     <button class="tab-btn" data-page="payments" onclick="switchPage('payments')">收付款</button>
     <button class="tab-btn" data-page="profit" onclick="switchPage('profit')">利润看板</button>
     <button class="tab-btn" data-page="customers" onclick="switchPage('customers')">客户管理</button>
+    <button class="tab-btn" data-page="comms" onclick="switchPage('comms')">沟通记录</button>
+    <button class="tab-btn" data-page="email" onclick="switchPage('email')">邮件管理</button>
   </div>
   <div class="stats" id="stats"></div>
   <div id="pageOrders">
@@ -159,6 +161,132 @@ tr:hover td{background:var(--g50)}.num{text-align:right;font-variant-numeric:tab
       <button class="btn btn-p btn-s" onclick="openCustomerModal()">＋ 新建客户</button>
     </div>
     <div class="card"><div class="card-hd"><h2>客户列表</h2></div><div id="custList"></div></div>
+  </div>
+</div>
+
+  <!-- Comms Page -->
+  <div id="pageComms" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <div class="filter-bar">
+        <select id="commCustomerFilter" onchange="filterComms()"><option value="">全部客户</option></select>
+        <select id="commChannelFilter" onchange="filterComms()"><option value="">全部渠道</option><option value="邮件">邮件</option><option value="WhatsApp">WhatsApp</option><option value="电话">电话</option><option value="会议">会议</option><option value="微信">微信</option><option value="其他">其他</option></select>
+        <select id="commDirectionFilter" onchange="filterComms()"><option value="">全部方向</option><option value="发出">发出</option><option value="收到">收到</option></select>
+        <select id="commTagFilter" onchange="filterComms()"><option value="">全部标签</option><option value="价格谈判">价格谈判</option><option value="催款">催款</option><option value="质量投诉">质量投诉</option><option value="发货">发货</option><option value="PO">PO</option></select>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-s btn-o" onclick="exportComms()">导出 CSV</button>
+        <button class="btn btn-p" onclick="openCommsModal()">＋ 添加沟通记录</button>
+      </div>
+    </div>
+    <div class="card"><div class="card-hd"><h2>沟通记录</h2></div><div id="commsList"></div></div>
+  </div>
+
+  <!-- Email Page -->
+  <div id="pageEmail" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <div class="filter-bar">
+        <select id="emailStatusFilter" onchange="renderEmailLogs()"><option value="">全部状态</option><option value="sent">已发送</option><option value="failed">失败</option><option value="draft">草稿</option></select>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-s btn-o" onclick="renderEmailAccounts()">发件箱设置</button>
+        <button class="btn btn-s btn-o" onclick="renderEmailTemplates()">邮件模板</button>
+        <button class="btn btn-p" onclick="openEmailModal()">＋ 发送新邮件</button>
+      </div>
+    </div>
+    <div class="card"><div class="card-hd"><h2>邮件发送记录</h2></div><div id="emailLogList"></div></div>
+  </div>
+
+<!-- Comms Modal -->
+<div class="modal-ov" id="commsModal">
+  <div class="modal">
+    <div class="modal-hd"><h3 id="commsModalTitle">添加沟通记录</h3><button class="btn btn-s btn-o" onclick="closeModal('commsModal')">✕</button></div>
+    <div class="modal-bd">
+      <input type="hidden" id="commsLogId">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div><label style="font-size:11px;color:var(--g500)">客户 *</label><select id="commsCustomer" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px" onchange="onCommsCustomerChange()"></select></div>
+        <div><label style="font-size:11px;color:var(--g500)">关联订单</label><select id="commsOrder" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"></select></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div><label style="font-size:11px;color:var(--g500)">渠道 *</label><select id="commsChannel" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"><option>邮件</option><option>WhatsApp</option><option>电话</option><option>会议</option><option>微信</option><option>其他</option></select></div>
+        <div><label style="font-size:11px;color:var(--g500)">方向 *</label><select id="commsDirection" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"><option>发出</option><option>收到</option></select></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div><label style="font-size:11px;color:var(--g500)">对方联系人</label><select id="commsContact" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"></select></div>
+        <div><label style="font-size:11px;color:var(--g500)">发生时间</label><input type="datetime-local" id="commsOccurred" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"></div>
+      </div>
+      <div style="margin-bottom:10px"><label style="font-size:11px;color:var(--g500)">主题</label><input type="text" id="commsSubject" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px" placeholder="邮件主题（邮件类必填）"></div>
+      <div style="margin-bottom:10px"><label style="font-size:11px;color:var(--g500)">沟通内容摘要 *</label><textarea id="commsContent" rows="3" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px;resize:vertical"></textarea></div>
+      <div style="margin-bottom:10px"><label style="font-size:11px;color:var(--g500)">标签（逗号分隔）</label><input type="text" id="commsTags" placeholder="价格谈判,催款" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"></div>
+      <div style="margin-bottom:10px"><label style="font-size:11px;color:var(--g500)">附件</label><div id="commsAttList" style="font-size:12px;color:var(--g400);margin-bottom:6px"></div><input type="file" id="commsAttInput" multiple onchange="onCommsAttPicked()" style="font-size:12px"></div>
+    </div>
+    <div class="modal-ft" style="display:flex;justify-content:flex-end;gap:8px;padding:10px 16px;border-top:1px solid var(--g200)">
+      <button class="btn btn-o" onclick="closeModal('commsModal')">取消</button>
+      <button class="btn btn-p" onclick="saveComms()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Email Modal -->
+<div class="modal-ov" id="emailModal">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-hd"><h3 id="emailModalTitle">发送新邮件</h3><button class="btn btn-s btn-o" onclick="closeModal('emailModal')">✕</button></div>
+    <div class="modal-bd">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div><label style="font-size:11px;color:var(--g500)">发件账号</label><select id="emailAccount" onchange="onEmailAccountChange()" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"></select></div>
+        <div><label style="font-size:11px;color:var(--g500)">邮件类型</label><select id="emailTemplateType" onchange="onEmailTemplateTypeChange()" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"><option value="">自定义</option><option value="pi">PI</option><option value="ci">CI</option><option value="payment">催款</option><option value="shipment">发货通知</option></select></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div><label style="font-size:11px;color:var(--g500)">关联订单</label><select id="emailOrder" onchange="onEmailOrderChange()" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"></select></div>
+        <div><label style="font-size:11px;color:var(--g500)">收件人</label><input type="email" id="emailTo" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div><label style="font-size:11px;color:var(--g500)">抄送</label><input type="email" id="emailCc" placeholder="可选" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"></div>
+        <div><label style="font-size:11px;color:var(--g500)">主题</label><input type="text" id="emailSubject" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"></div>
+      </div>
+      <div style="margin-bottom:10px"><label style="font-size:11px;color:var(--g500)">正文</label><textarea id="emailBody" rows="10" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px;resize:vertical;font-family:monospace"></textarea></div>
+      <div style="margin-bottom:10px"><label style="font-size:11px;color:var(--g500)">附件（可选）</label><div id="emailAttList" style="font-size:12px;color:var(--g400);margin-bottom:6px"></div><input type="file" id="emailAttInput" multiple onchange="onEmailAttPicked()" style="font-size:12px"></div>
+      <div style="margin-bottom:10px"><button class="btn btn-s btn-o" style="font-size:11px" onclick="previewEmail()">预览渲染效果</button></div>
+    </div>
+    <div class="modal-ft" style="display:flex;justify-content:flex-end;gap:8px;padding:10px 16px;border-top:1px solid var(--g200)">
+      <button class="btn btn-o" onclick="closeModal('emailModal')">取消</button>
+      <button class="btn btn-p" onclick="sendEmail()">发送</button>
+    </div>
+  </div>
+</div>
+
+<!-- Email Template Modal -->
+<div class="modal-ov" id="emailTemplateModal">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-hd"><h3 id="emailTemplateModalTitle">邮件模板列表</h3><button class="btn btn-s btn-o" onclick="closeModal('emailTemplateModal')">✕</button></div>
+    <div class="modal-bd">
+      <div id="emailTemplateList" style="margin-bottom:12px"></div>
+      <div id="emailTemplateEditor" style="display:none">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <input type="text" id="tplName" placeholder="模板名称" style="font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px">
+          <select id="tplType" style="font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"><option value="">自定义</option><option value="pi">PI</option><option value="ci">CI</option><option value="payment">催款</option><option value="shipment">发货通知</option></select>
+        </div>
+        <div style="margin-bottom:8px"><input type="text" id="tplSubject" placeholder="邮件主题模板" style="width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"></div>
+        <div style="margin-bottom:8px"><textarea id="tplBody" rows="8" placeholder="邮件正文（支持 {{变量}} 语法）" style="width:100%;font-size:12px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px;resize:vertical;font-family:monospace"></textarea></div>
+        <div style="margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-s" style="font-size:11px" onclick="insertTplVar('contact_name')">{{contact_name}}</button>
+          <button class="btn btn-s" style="font-size:11px" onclick="insertTplVar('po_number')">{{po_number}}</button>
+          <button class="btn btn-s" style="font-size:11px" onclick="insertTplVar('pi_number')">{{pi_number}}</button>
+          <button class="btn btn-s" style="font-size:11px" onclick="insertTplVar('product_list')">{{product_list}}</button>
+          <button class="btn btn-s" style="font-size:11px" onclick="insertTplVar('total_amount')">{{total_amount}}</button>
+          <button class="btn btn-s" style="font-size:11px" onclick="insertTplVar('currency')">{{currency}}</button>
+          <button class="btn btn-s" style="font-size:11px" onclick="insertTplVar('payment_terms')">{{payment_terms}}</button>
+          <button class="btn btn-s" style="font-size:11px" onclick="insertTplVar('incoterms')">{{incoterms}}</button>
+          <button class="btn btn-s" style="font-size:11px" onclick="insertTplVar('overdue_list')">{{overdue_list}}</button>
+          <button class="btn btn-s" style="font-size:11px" onclick="insertTplVar('overdue_amount')">{{overdue_amount}}</button>
+          <button class="btn btn-s" style="font-size:11px" onclick="insertTplVar('sender_name')">{{sender_name}}</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-ft" style="display:flex;justify-content:flex-end;gap:8px;padding:10px 16px;border-top:1px solid var(--g200)">
+      <button class="btn btn-o" onclick="closeModal('emailTemplateModal')">关闭</button>
+      <button class="btn btn-s" onclick="newTpl()" style="font-size:12px">新建模板</button>
+      <button class="btn btn-p" onclick="saveTpl()">保存模板</button>
+    </div>
   </div>
 </div>
 
@@ -485,7 +613,8 @@ function canTransition(from,to){
 //  API LAYER (Flask + SQLite backend)
 // ═══════════════════════════════════════════════════════════
 const API="";
-let orders=[], documents=[], shipments=[], payments=[], costRecords=[], fxConfig={USD:7.2}, customers=[], customerContacts=[];
+let orders=[], documents=[], shipments=[], payments=[], costRecords=[], fxConfig={USD:7.2}, customers=[], customerContacts=[], communications=[], emailTemplates=[], emailAccounts=[], emailLogs=[];
+let _commsAttBuffer=[], _emailAttBuffer=[], _tplId=null;
 
 async function api(method, path, body){
   const opt={method,headers:{"Content-Type":"application/json"}};
@@ -502,6 +631,10 @@ async function loadAll(){
   costRecords=await api("GET","/api/costs");
   fxConfig=await api("GET","/api/fx");
   customers=await api("GET","/api/customers");
+  communications=await api("GET","/api/communications");
+  emailTemplates=await api("GET","/api/email/templates");
+  emailAccounts=await api("GET","/api/email/accounts");
+  emailLogs=await api("GET","/api/email/logs");
   customerContacts=[];
   for(const c of customers){
     try{
@@ -729,6 +862,8 @@ function renderOrders(){
         <button class="btn btn-s btn-p btn-i" onclick="openDocModal('${o.order_id}')" title="生成单证">📄</button>
         <button class="btn btn-s btn-o btn-i" onclick="openShipModal('${o.order_id}')" title="创建出运">🚢</button>
         <button class="btn btn-s btn-o btn-i" onclick="openDocHistory('${o.order_id}')" title="历史单证">📋</button>
+        <button class="btn btn-s btn-o btn-i" onclick="openCommsForOrder('\${o.order_id}')" title="添加沟通记录">💬</button>
+        <button class="btn btn-s btn-p btn-i" onclick="sendPIForOrder('\${o.order_id}')" title="发送 PI">📧</button>
         <button class="btn btn-s btn-r btn-i" onclick="deleteOrder('${o.order_id}')" title="删除">🗑️</button>
       </td></tr>`;
   }
@@ -1024,7 +1159,7 @@ const SHIP_STATUS_LABEL={booked:"已订舱",loaded:"已装箱",onboard:"已装�
 
 function switchPage(page){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle("active",b.dataset.page===page));
-  ["orders","shipments","payments","profit","customers"].forEach(p=>{
+  ["orders","shipments","payments","profit","customers","comms","email"].forEach(p=>{
     const el=document.getElementById("page"+p.charAt(0).toUpperCase()+p.slice(1));
     if(el)el.style.display=(p===page)?"":"none";
   });
@@ -1032,6 +1167,8 @@ function switchPage(page){
   if(page==="payments")renderPayments();
   if(page==="profit")renderProfit();
   if(page==="customers")renderCustomers();
+  if(page==="comms")renderComms();
+  if(page==="email")renderEmailLogs();
 }
 
 function openShipModal(orderId){
@@ -1653,6 +1790,7 @@ function renderCustomers(){
         <td style="font-size:11px;color:var(--g500)">${c.last_comm_at?esc(c.last_comm_at):"从未"}</td>
         <td>
           <button class="btn btn-s btn-o" onclick="openCustomerModal('${c.customer_id}')">编辑</button>
+          <button class="btn btn-s btn-o" style="margin-left:4px" onclick="openCommsForCustomer('\${c.customer_id}')">沟通</button>
           <button class="btn btn-s btn-o" style="margin-left:4px;color:var(--r)" onclick="deleteCustomer('${c.customer_id}')">删除</button>
         </td>
       </tr>`).join("")}
@@ -1662,6 +1800,404 @@ function renderCustomers(){
 }
 
 function filterCustomers(){renderCustomers();}
+
+// ═══════════════════════════════════════════════════════════
+//  INCREMENT 6: COMMUNICATION LOGS
+// ═══════════════════════════════════════════════════════════
+function _fillCommsCustomerSelect(selId, cid){
+  const sel=document.getElementById(selId);if(!sel)return;
+  sel.innerHTML='<option value="">— 不关联客户 —</option>'+customers.map(c=>`<option value="${c.customer_id}" ${c.customer_id===cid?"selected":""}>${esc(c.company_name||c.customer_code||"")}</option>`).join("");
+}
+function _fillCommsOrderSelect(selId, cid, oid){
+  const sel=document.getElementById(selId);if(!sel)return;
+  let list=orders.slice();
+  if(cid){const cn=(customers.find(c=>c.customer_id===cid)?.company_name||"");list=list.filter(o=>o.buyer_id===cid||o.buyer_id===cn);}
+  sel.innerHTML='<option value="">— 不关联订单 —</option>'+list.map(o=>`<option value="${o.order_id}" ${o.order_id===oid?"selected":""}>${esc(o.po_number)}</option>`).join("");
+}
+function _fillCommsContactSelect(selId, cid){
+  const sel=document.getElementById(selId);if(!sel)return;
+  const cs=cid?customerContacts.filter(ct=>ct.customer_id===cid):[];
+  sel.innerHTML='<option value="">—</option>'+cs.map(ct=>`<option value="${ct.contact_id}">${esc(ct.name||"")}${ct.is_primary?" ★":""}</option>`).join("");
+}
+
+function openCommsModal(logId, cid, oid){
+  _commsAttBuffer=[];
+  document.getElementById("commsModalTitle").textContent=logId?"编辑沟通记录":"添加沟通记录";
+  document.getElementById("commsLogId").value=logId||"";
+  if(logId){
+    const d=communications.find(x=>x.log_id===logId)||{};
+    _fillCommsCustomerSelect("commsCustomer",d.customer_id);
+    document.getElementById("commsCustomer").value=d.customer_id||"";
+    onCommsCustomerChange();
+    document.getElementById("commsOrder").value=d.order_id||"";
+    _fillCommsContactSelect("commsContact",d.customer_id);
+    document.getElementById("commsContact").value=d.contact_id||"";
+    document.getElementById("commsChannel").value=d.channel||"邮件";
+    document.getElementById("commsDirection").value=d.direction||"发出";
+    document.getElementById("commsSubject").value=d.subject||"";
+    document.getElementById("commsContent").value=d.content||"";
+    document.getElementById("commsTags").value=JSON.parse(d.tags_json||"[]").join(",");
+    document.getElementById("commsOccurred").value=(d.occurred_at||"").replace(" ","T").slice(0,16);
+    _commsAttBuffer=JSON.parse(d.attachments_json||"[]");
+  }else{
+    _fillCommsCustomerSelect("commsCustomer",cid||"");
+    document.getElementById("commsCustomer").value=cid||"";
+    onCommsCustomerChange();
+    document.getElementById("commsOrder").value=oid||"";
+    _fillCommsContactSelect("commsContact",cid||"");
+    document.getElementById("commsContact").value="";
+    document.getElementById("commsChannel").value="邮件";
+    document.getElementById("commsDirection").value="发出";
+    document.getElementById("commsSubject").value="";
+    document.getElementById("commsContent").value="";
+    document.getElementById("commsTags").value="";
+    document.getElementById("commsOccurred").value=new Date().toISOString().slice(0,16);
+  }
+  renderCommsAttList();
+  openModal("commsModal");
+}
+function onCommsCustomerChange(){
+  const cid=document.getElementById("commsCustomer").value;
+  _fillCommsOrderSelect("commsOrder",cid,document.getElementById("commsOrder").value);
+  _fillCommsContactSelect("commsContact",cid);
+}
+function onCommsAttPicked(){
+  const inp=document.getElementById("commsAttInput");
+  for(const f of inp.files)_commsAttBuffer.push({file_name:f.name,file_path:"pending://"+f.name,size:f.size});
+  inp.value="";
+  renderCommsAttList();
+}
+function renderCommsAttList(){
+  const el=document.getElementById("commsAttList");if(!el)return;
+  el.innerHTML=_commsAttBuffer.length?_commsAttBuffer.map((a,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:2px 0;font-size:12px"><span>${esc(a.file_name)}</span><button class="btn btn-s btn-o" style="font-size:10px" onclick="_commsAttBuffer.splice(${i},1);renderCommsAttList()">✕</button></div>`).join(""):'<div style="font-size:11px;color:var(--g400)">未选择附件</div>';
+}
+async function saveComms(){
+  const logId=document.getElementById("commsLogId").value;
+  const cid=document.getElementById("commsCustomer").value;
+  const content=document.getElementById("commsContent").value.trim();
+  if(!cid){alert("请选择客户");return;}
+  if(!content){alert("沟通内容摘要为必填项");return;}
+  const payload={
+    customer_id:cid,
+    order_id:document.getElementById("commsOrder").value||null,
+    contact_id:document.getElementById("commsContact").value||null,
+    channel:document.getElementById("commsChannel").value,
+    direction:document.getElementById("commsDirection").value,
+    subject:document.getElementById("commsSubject").value.trim(),
+    content:content,
+    occurred_at:document.getElementById("commsOccurred").value.replace("T"," ")||null,
+    attachments:_commsAttBuffer.filter(a=>a.file_path&&a.file_path!=="pending"),
+    tags:document.getElementById("commsTags").value.split(",").map(s=>s.trim()).filter(Boolean)
+  };
+  let savedId=logId;
+  if(logId){
+    await api("PUT","/api/communications/"+logId,payload);
+  }else{
+    const res=await api("POST","/api/communications",payload);
+    savedId=res.log_id;
+  }
+  // 上传新选的本地附件（先保存记录再上传到服务器目录）
+  for(const f of document.getElementById("commsAttInput").files||[]){}
+  await loadAll();
+  closeModal("commsModal");
+  renderComms();
+  alert("沟通记录已保存");
+}
+function deleteComms(logId){
+  if(!confirm("确认删除该沟通记录？"))return;
+  api("DELETE","/api/communications/"+logId).then(async()=>{await loadAll();renderComms();});
+}
+function _fillCommsCustomerSelectFilter(){
+  const sel=document.getElementById("commCustomerFilter");if(!sel)return;
+  sel.innerHTML='<option value="">全部客户</option>'+customers.map(c=>`<option value="${c.customer_id}">${esc(c.company_name||c.customer_code)}</option>`).join("");
+}
+function renderComms(){
+  _fillCommsCustomerSelectFilter();
+  const list=document.getElementById("commsList");
+  const cid=document.getElementById("commCustomerFilter")?.value||"";
+  const ch=document.getElementById("commChannelFilter")?.value||"";
+  const dir=document.getElementById("commDirectionFilter")?.value||"";
+  const tag=document.getElementById("commTagFilter")?.value||"";
+  let rows=communications.slice();
+  if(cid)rows=rows.filter(r=>r.customer_id===cid);
+  if(ch)rows=rows.filter(r=>r.channel===ch);
+  if(dir)rows=rows.filter(r=>r.direction===dir);
+  if(tag)rows=rows.filter(r=>JSON.parse(r.tags_json||"[]").includes(tag));
+  rows.sort((a,b)=>(b.occurred_at||"").localeCompare(a.occurred_at||""));
+  if(!rows.length){list.innerHTML='<div class="empty"><p>暂无沟通记录，点击「添加沟通记录」开始</p></div>';return;}
+  list.innerHTML=`<div style="overflow-x:auto"><table><thead><tr>
+    <th>时间</th><th>客户</th><th>订单</th><th>渠道</th><th>方向</th><th>主题/摘要</th><th>标签</th><th>操作</th>
+  </tr></thead><tbody>${rows.map(r=>{
+    const c=customers.find(x=>x.customer_id===r.customer_id);
+    const o=orders.find(x=>x.order_id===r.order_id);
+    const tags=JSON.parse(r.tags_json||"[]");
+    const atts=JSON.parse(r.attachments_json||"[]");
+    return `<tr>
+      <td style="font-size:12px;white-space:nowrap">${esc(r.occurred_at||"")}</td>
+      <td style="font-size:12px">${esc(c?.company_name||r.customer_id||"—")}</td>
+      <td style="font-size:12px">${o?`<a href="javascript:void(0)" onclick="switchPage('orders')" style="color:var(--p)">${esc(o.po_number)}</a>`:"客户级"}</td>
+      <td style="font-size:12px">${esc(r.channel)}</td>
+      <td style="font-size:12px">${r.direction==="发出"?'<span style="color:var(--p)">→ 发出</span>':'<span style="color:var(--s)">← 收到</span>'}</td>
+      <td style="font-size:12px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(r.subject||"")} ${esc(r.content||"")}">${esc(r.subject||"")}${r.content?" · "+esc(r.content.slice(0,40)):""}</td>
+      <td style="font-size:11px">${tags.map(t=>`<span class="tag" style="margin:1px">${esc(t)}</span>`).join("")}${atts.length?` <span title="附件" style="font-size:11px">📎${atts.length}</span>`:""}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-s btn-o" style="font-size:11px" onclick="openCommsModal('${r.log_id}')">编辑</button>
+        <button class="btn btn-s btn-r" style="font-size:11px" onclick="deleteComms('${r.log_id}')">删除</button>
+      </td>
+    </tr>`;}).join("")}</tbody></div>`;
+}
+function filterComms(){renderComms();}
+async function exportComms(){
+  const cid=document.getElementById("commCustomerFilter")?.value||"";
+  if(cid){window.open("/api/communications/export/"+cid,"_blank");return;}
+  const rows=communications.slice();
+  const head=["log_id","customer_id","order_id","channel","direction","subject","content","occurred_at","tags"];
+  const body=rows.map(r=>[
+    r.log_id,r.customer_id||"",r.order_id||"",r.channel,r.direction,
+    '"'+(r.subject||"").replace(/"/g,'""')+'"',
+    '"'+(r.content||"").replace(/"/g,'""')+'"',
+    r.occurred_at||"",JSON.parse(r.tags_json||"[]").join("|")
+  ].join(",")).join("\n");
+
+  const blob=new Blob(["\ufeff"+head.join(",")+"\n"+body],{type:"text/csv;charset=utf-8"});
+
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="communications_all.csv";a.click();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INCREMENT 7: EMAIL
+// ═══════════════════════════════════════════════════════════
+function openEmailModal(oid, templateType){
+  _emailAttBuffer=[];
+  document.getElementById("emailModalTitle").textContent="发送新邮件";
+  _fillEmailAccountSelect();
+  document.getElementById("emailTemplateType").value=templateType||"";
+  _fillEmailOrderSelect(oid);
+  document.getElementById("emailOrder").value=oid||"";
+  document.getElementById("emailTo").value="";
+  document.getElementById("emailCc").value="";
+  document.getElementById("emailSubject").value="";
+  document.getElementById("emailBody").value="";
+  renderEmailAttList();
+  if(oid||templateType)onEmailTemplateTypeChange();
+  openModal("emailModal");
+}
+function _fillEmailAccountSelect(){
+  const sel=document.getElementById("emailAccount");if(!sel)return;
+  sel.innerHTML=emailAccounts.length?emailAccounts.map(a=>`<option value="${a.account_id}">${esc(a.email_address)}${a.is_default?" ★默认":""}</option>`).join(""):'<option value="">（未配置发件账号）</option>';
+}
+function _fillEmailOrderSelect(oid){
+  const sel=document.getElementById("emailOrder");if(!sel)return;
+  sel.innerHTML='<option value="">— 不关联订单 —</option>'+orders.map(o=>`<option value="${o.order_id}" ${o.order_id===oid?"selected":""}>${esc(o.po_number)}</option>`).join("");
+}
+async function onEmailTemplateTypeChange(){
+  const tt=document.getElementById("emailTemplateType").value;
+  const oid=document.getElementById("emailOrder").value;
+  if(!tt||!oid)return;
+  const tpl=emailTemplates.find(t=>t.template_type===tt&&t.is_builtin)||emailTemplates.find(t=>t.template_type===tt);
+  if(!tpl)return;
+  const o=orders.find(x=>x.order_id===oid);
+  const cid=o?.buyer_id||"";
+  try{
+    const r=await api("POST","/api/email/render",{template_id:tpl.template_id,order_id:oid,customer_id:cid});
+    document.getElementById("emailSubject").value=r.subject||"";
+    document.getElementById("emailBody").value=r.body||"";
+    if(r.to_email)document.getElementById("emailTo").value=r.to_email;
+  }catch(e){/* ignore */}
+}
+function onEmailOrderChange(){onEmailTemplateTypeChange();}
+function onEmailAttPicked(){
+  const inp=document.getElementById("emailAttInput");
+  for(const f of inp.files)_emailAttBuffer.push({file_name:f.name,file_path:"pending://"+f.name,size:f.size});
+  inp.value="";
+  renderEmailAttList();
+}
+function renderEmailAttList(){
+  const el=document.getElementById("emailAttList");if(!el)return;
+  el.innerHTML=_emailAttBuffer.length?_emailAttBuffer.map((a,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:2px 0;font-size:12px"><span>${esc(a.file_name)}</span><button class="btn btn-s btn-o" style="font-size:10px" onclick="_emailAttBuffer.splice(${i},1);renderEmailAttList()">✕</button></div>`).join(""):'<div style="font-size:11px;color:var(--g400)">未选择附件</div>';
+}
+async function previewEmail(){
+  const oid=document.getElementById("emailOrder").value;
+  const tt=document.getElementById("emailTemplateType").value;
+  if(!tt){alert("请先选择邮件类型以启用模板渲染预览");return;}
+  const tpl=emailTemplates.find(t=>t.template_type===tt&&t.is_builtin)||emailTemplates.find(t=>t.template_type===tt);
+  if(!tpl){alert("未找到对应模板");return;}
+  const o=orders.find(x=>x.order_id===oid);
+  const cid=o?.buyer_id||"";
+  const r=await api("POST","/api/email/render",{template_id:tpl.template_id,order_id:oid,customer_id:cid});
+  document.getElementById("emailSubject").value=r.subject||"";
+  document.getElementById("emailBody").value=r.body||"";
+  if(r.to_email)document.getElementById("emailTo").value=r.to_email;
+  alert("已渲染并填入正文框（变量已替换）");
+}
+async function sendEmail(){
+  const acc=document.getElementById("emailAccount").value;
+  if(!acc||!emailAccounts.length){alert("请先配置发件账号（邮件管理 → 发件箱设置）");return;}
+  const toEmail=document.getElementById("emailTo").value.trim();
+  if(!toEmail){alert("请填写收件人邮箱");return;}
+  const oid=document.getElementById("emailOrder").value||null;
+  const o=oid?orders.find(x=>x.order_id===oid):null;
+  const cid=o?.buyer_id||"";
+  const payload={
+    account_id:acc,
+    to_email:toEmail,
+    cc_email:document.getElementById("emailCc").value.trim(),
+    subject:document.getElementById("emailSubject").value.trim(),
+    body:document.getElementById("emailBody").value,
+    customer_id:cid||null,
+    order_id:oid,
+    template_type:document.getElementById("emailTemplateType").value||null,
+    attachments:_emailAttBuffer.filter(a=>a.file_path&&a.file_path!=="pending")
+  };
+  try{
+    const r=await api("POST","/api/email/send",payload);
+    if(r.error){alert("邮件发送失败：\n"+r.error);await loadAll();closeModal("emailModal");return;}
+  }catch(e){alert("发送请求失败："+e.message);return;}
+  await loadAll();
+  closeModal("emailModal");
+  alert("邮件已发送并自动记录沟通记录");
+}
+async function renderEmailLogs(){
+  _fillEmailAccountSelect();
+  const list=document.getElementById("emailLogList");
+  const st=document.getElementById("emailStatusFilter")?.value||"";
+  let rows=emailLogs.slice();
+  if(st)rows=rows.filter(r=>r.status===st);
+  rows.sort((a,b)=>((b.sent_at||"")+(b.created_at||"")).localeCompare((a.sent_at||"")+(a.created_at||"")));
+  if(!rows.length){list.innerHTML='<div class="empty"><p>暂无邮件记录</p></div>';return;}
+  list.innerHTML=`<div style="overflow-x:auto"><table><thead><tr>
+    <th>时间</th><th>发件</th><th>收件</th><th>类型</th><th>主题</th><th>状态</th>
+  </tr></thead><tbody>${rows.map(r=>{
+    const o=orders.find(x=>x.order_id===r.order_id);
+    const smap={sent:"<span class='tag tag-s'>已发送</span>",failed:"<span class='tag tag-r'>失败</span>",draft:"<span class='tag tag-w'>草稿</span>"};
+    return `<tr>
+      <td style="font-size:12px;white-space:nowrap">${esc(r.sent_at||"")}</td>
+      <td style="font-size:12px">${esc((emailAccounts.find(a=>a.account_id===r.account_id)||{}).email_address||"")}</td>
+      <td style="font-size:12px">${esc(r.to_email||"")}</td>
+      <td style="font-size:12px">${esc(r.template_type||"自定义")}</td>
+      <td style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(r.subject||"")}">${o?esc(o.po_number)+" — ":""}${esc(r.subject||"")}</td>
+      <td style="font-size:12px">${r.error_message?`<span style="color:var(--r)">${esc(r.status)}</span><div style="font-size:10px;color:var(--g400);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(r.error_message)}">${esc(r.error_message)}</div>`:(smap[r.status]||esc(r.status||""))}</td>
+    </tr>`;}).join("")}</tbody></div>`;
+}
+async function renderEmailAccounts(){
+  _fillEmailAccountSelect();
+  const ov=document.createElement("div");
+  ov.className="modal-ov open";ov.id="emailAccountModal";
+  ov.innerHTML=`<div class="modal" style="max-width:440px"><div class="modal-hd"><h3>发件箱设置</h3><button class="btn btn-s btn-o" onclick="closeModal('emailAccountModal')">✕</button></div>
+    <div class="modal-bd">
+      <div style="font-size:11px;color:var(--g400);margin-bottom:8px">现有账号：</div>
+      <div style="margin-bottom:12px">${emailAccounts.map(a=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px"><span>${esc(a.email_address)}${a.is_default?" <span style='color:var(--p)'>★默认</span>":""}</span><button class="btn btn-s btn-o" style="font-size:11px" onclick="deleteEmailAccount('${a.account_id}')">删除</button></div>`).join("")||'<div style="font-size:12px;color:var(--g400)">暂无账号</div>'}</div>
+      <input type="hidden" id="accId">
+      <div style="display:grid;gap:8px;margin-bottom:8px">
+        <input type="email" id="accEmail" placeholder="发件邮箱" style="font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px">
+        <input type="text" id="accDisplay" placeholder="发件人显示名" style="font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px">
+        <div style="display:grid;grid-template-columns:1fr 100px;gap:8px"><input type="text" id="accHost" placeholder="SMTP 服务器（如 smtp.gmail.com）" style="font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"><input type="number" id="accPort" placeholder="端口" value="587" style="font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px"></div>
+        <input type="text" id="accUser" placeholder="SMTP 用户名" style="font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px">
+        <input type="password" id="accPass" placeholder="SMTP 密码 / 应用专用密码" style="font-size:13px;padding:5px 8px;border:1px solid var(--g300);border-radius:5px">
+        <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="accDefault">设为默认发件账号</label>
+      </div>
+      <div style="font-size:11px;color:var(--g400)">提示：密码以明文存入本地 SQLite（个人自用）。建议用应用专用密码。</div>
+    </div>
+    <div class="modal-ft" style="display:flex;justify-content:flex-end;gap:8px;padding:10px 16px;border-top:1px solid var(--g200)">
+      <button class="btn btn-o" onclick="closeModal('emailAccountModal')">取消</button>
+      <button class="btn btn-p" onclick="saveEmailAccount()">保存账号</button>
+    </div></div>`;
+  document.body.appendChild(ov);
+}
+async function saveEmailAccount(){
+  const payload={
+    account_id:document.getElementById("accId").value||("ea"+Date.now().toString(36)),
+    email_address:document.getElementById("accEmail").value.trim(),
+    display_name:document.getElementById("accDisplay").value.trim(),
+    smtp_host:document.getElementById("accHost").value.trim(),
+    smtp_port:parseInt(document.getElementById("accPort").value)||587,
+    smtp_user:document.getElementById("accUser").value.trim(),
+    smtp_password:document.getElementById("accPass").value,
+    is_default:document.getElementById("accDefault").checked
+  };
+  if(!payload.email_address||!payload.smtp_host){alert("邮箱和 SMTP 服务器为必填项");return;}
+  if(!payload.smtp_user&&!document.getElementById("accId").value){/* new requires user */}
+  await api("POST","/api/email/accounts",payload);
+  await loadAll();
+  closeModal("emailAccountModal");
+  alert("发件账号已保存");
+}
+async function deleteEmailAccount(aid){
+  if(!confirm("确认删除该发件账号？"))return;
+  await api("DELETE","/api/email/accounts/"+aid);
+  await loadAll();
+  renderEmailAccounts();
+}
+async function renderEmailTemplates(){
+  document.getElementById("emailTemplateModalTitle").textContent="邮件模板";
+  document.getElementById("emailTemplateList").style.display="";
+  document.getElementById("emailTemplateEditor").style.display="none";
+  document.getElementById("emailTemplateList").innerHTML=emailTemplates.map(t=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;border:1px solid var(--g300);border-radius:6px;margin-bottom:6px;cursor:pointer" onclick="editTpl('${t.template_id}')">
+      <div><strong style="font-size:13px">${esc(t.name)}</strong> ${t.is_builtin?'<span style="font-size:10px;color:var(--g400)">内置</span>':''} <span style="font-size:11px;color:var(--g500)">· ${esc(t.template_type||"自定义")}</span></div>
+      <div style="display:flex;gap:4px"><button class="btn btn-s" style="font-size:11px" onclick="event.stopPropagation();copyTpl('${t.template_id}')">复制</button><button class="btn btn-s btn-r" style="font-size:11px" onclick="event.stopPropagation();deleteTpl('${t.template_id}')">删除</button></div>
+    </div>`).join("");
+  openModal("emailTemplateModal");
+}
+function editTpl(tid){
+  const t=emailTemplates.find(x=>x.template_id===tid);if(!t)return;
+  _tplId=tid;
+  document.getElementById("emailTemplateList").style.display="none";
+  document.getElementById("emailTemplateEditor").style.display="";
+  document.getElementById("tplName").value=t.name||"";
+  document.getElementById("tplType").value=t.template_type||"";
+  document.getElementById("tplSubject").value=t.subject||"";
+  document.getElementById("tplBody").value=t.body||"";
+}
+function newTpl(){
+  _tplId=null;
+  document.getElementById("emailTemplateList").style.display="none";
+  document.getElementById("emailTemplateEditor").style.display="";
+  document.getElementById("tplName").value="";document.getElementById("tplType").value="";
+  document.getElementById("tplSubject").value="";document.getElementById("tplBody").value="";
+}
+function insertTplVar(v){
+  const el=document.getElementById("tplBody");
+  const token="{{"+v+"}}";
+  const s=el.selectionStart,e=el.selectionEnd;
+  el.value=el.value.slice(0,s)+token+el.value.slice(e);
+  el.focus();el.setSelectionRange(s+token.length,s+token.length);
+}
+async function saveTpl(){
+  const payload={
+    template_id:_tplId||("et"+Date.now().toString(36)),
+    name:document.getElementById("tplName").value.trim(),
+    template_type:document.getElementById("tplType").value||null,
+    subject:document.getElementById("tplSubject").value,
+    body:document.getElementById("tplBody").value
+  };
+  if(!payload.name){alert("模板名称为必填项");return;}
+  await api("POST","/api/email/templates",payload);
+  await loadAll();
+  closeModal("emailTemplateModal");
+  alert("模板已保存");
+}
+async function copyTpl(tid){
+  const t=emailTemplates.find(x=>x.template_id===tid);if(!t)return;
+  await api("POST","/api/email/templates",{template_id:"et"+Date.now().toString(36),name:t.name+"（副本）",template_type:t.template_type,subject:t.subject,body:t.body});
+  await loadAll();renderEmailTemplates();
+}
+async function deleteTpl(tid){
+  if(!confirm("确认删除该模板？"))return;
+  try{await api("DELETE","/api/email/templates/"+tid);}catch(e){alert(e.message||"删除失败");}
+  await loadAll();renderEmailTemplates();
+}
+
+// 订单/客户行内快捷入口
+function openCommsForOrder(oid){
+  const o=orders.find(x=>x.order_id===oid);if(!o)return;
+  openCommsModal(null,o.buyer_id||"",oid);
+}
+function openCommsForCustomer(cid){
+  openCommsModal(null,cid||"");
+}
+function sendPIForOrder(oid){openEmailModal(oid,"pi");}
+function sendCIForOrder(oid){openEmailModal(oid,"ci");}
 
 // ═══════════════════════════════════════════════════════════
 //  BOOT
@@ -1676,6 +2212,7 @@ document.addEventListener("DOMContentLoaded",async function(){
     return;
   }
   document.getElementById("filterStatus").addEventListener("change",renderOrders);
+  document.getElementById("commCustomerFilter")?.addEventListener("change",renderComms);
   document.getElementById("filterSearch").addEventListener("input",renderOrders);
   const sf=document.getElementById("shipFilterStatus");if(sf)sf.addEventListener("change",renderShipments);
   const ss=document.getElementById("shipFilterSearch");if(ss)ss.addEventListener("input",renderShipments);

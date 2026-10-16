@@ -234,6 +234,17 @@ def compute_order_status(o):
 @app.route("/")
 def index(): return send_from_directory(".", "index.html")
 
+@app.route("/uploads/<path:fp>")
+def download_upload(fp):
+    """下载上传附件（沟通记录/客户附件/单证），按 customer/order/log 目录结构"""
+    base = os.path.dirname(__file__)
+    full = os.path.normpath(os.path.join(base, "uploads", fp))
+    if not full.startswith(os.path.join(base, "uploads")):
+        return jsonify({"error": "forbidden"}), 403
+    if not os.path.isfile(full):
+        return jsonify({"error": "not found"}), 404
+    return send_from_directory("uploads", fp)
+
 @app.route("/api/orders", methods=["GET"])
 def api_list_orders(): return jsonify(list_orders())
 

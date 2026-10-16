@@ -1,0 +1,18 @@
+# Database
+fulfillment.db
+*.db
+
+# OS
+.DS_Store
+
+# Trae
+.trae-html-share-packages/
+
+# Python
+__pycache__/
+*.pyc
+.env
+
+# IDE
+.vscode/
+.idea/

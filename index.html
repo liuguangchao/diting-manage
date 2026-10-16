@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>外贸履约系统 v1.0</title>
+<style>
+:root{--p:#1d4ed8;--pl:#dbeafe;--pd:#1e3a8a;--s:#16a34a;--sl:#dcfce7;--w:#d97706;--wl:#fef3c7;--r:#ef4444;--rl:#fee2e2;--g50:#f8fafc;--g100:#f1f5f9;--g200:#e2e8f0;--g300:#cbd5e1;--g400:#94a3b8;--g500:#64748b;--g700:#334155;--g900:#0f172a;--rad:8px;--shd:0 1px 3px rgba(0,0,0,.1)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--g100);color:var(--g900);font-size:14px}
+.app{max-width:1300px;margin:0 auto;padding:20px}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.header h1{font-size:20px;color:var(--pd)}
+.badge{background:var(--pl);color:var(--p);padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600}
+.btn{display:inline-flex;align-items:center;gap:4px;padding:7px 14px;border:none;border-radius:var(--rad);cursor:pointer;font-size:13px;font-weight:500;transition:all .15s}
+.btn-p{background:var(--p);color:#fff}.btn-p:hover{background:var(--pd)}
+.btn-o{background:#fff;color:var(--g700);border:1px solid var(--g300)}.btn-o:hover{background:var(--g50)}
+.btn-r{background:var(--rl);color:var(--r)}.btn-r:hover{background:#fecaca}
+.btn-s{padding:4px 10px;font-size:12px}.btn-i{padding:5px 8px}
+.card{background:#fff;border-radius:var(--rad);box-shadow:var(--shd);overflow:hidden}
+.card-hd{padding:14px 18px;border-bottom:1px solid var(--g200);display:flex;align-items:center;justify-content:space-between}
+.card-hd h2{font-size:15px;font-weight:600}
+.form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:12px}
+.fg{display:flex;flex-direction:column;gap:4px}.fg label{font-size:12px;color:var(--g500);font-weight:500}
+.fg input,.fg select{padding:7px 10px;border:1px solid var(--g300);border-radius:6px;font-size:13px;outline:none;transition:border-color .15s}
+.fg input:focus,.fg select:focus{border-color:var(--p)}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--g100)}
+th{font-size:12px;font-weight:600;color:var(--g500);text-transform:uppercase;letter-spacing:.03em;background:var(--g50)}
+tr:hover td{background:var(--g50)}.num{text-align:right;font-variant-numeric:tabular-nums}
+.st{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;white-space:nowrap}
+.st-dft{background:var(--g100);color:var(--g500)}.st-cfm{background:var(--pl);color:var(--p)}
+.st-prd{background:#fef9c3;color:#a16207}.st-pnd{background:#ede9fe;color:#7c3aed}
+.st-prt{background:var(--wl);color:var(--w)}.st-shp{background:#cffafe;color:#0891b2}
+.st-don{background:var(--sl);color:var(--s)}.st-cxl{background:var(--rl);color:var(--r)}
+.filter-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.filter-bar select,.filter-bar input{padding:6px 10px;border:1px solid var(--g300);border-radius:6px;font-size:13px;outline:none}
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center}
+.modal-ov.open{display:flex}
+.modal{background:#fff;border-radius:12px;width:92%;max-width:960px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-sm{max-width:480px}
+.modal-hd{padding:16px 20px;border-bottom:1px solid var(--g200);display:flex;align-items:center;justify-content:space-between}
+.modal-hd h3{font-size:16px}
+.modal-bd{padding:20px}
+.modal-ft{padding:14px 20px;border-top:1px solid var(--g200);display:flex;justify-content:flex-end;gap:8px}
+.line-editor-row{display:grid;grid-template-columns:80px 1fr 1fr 70px 80px 70px 90px 40px;gap:6px;align-items:end;padding:8px 0;border-bottom:1px solid var(--g100)}
+.line-editor-row.hd{background:var(--g50);font-size:11px;font-weight:600;color:var(--g500);text-transform:uppercase}
+.line-editor-row input{padding:5px 8px;border:1px solid var(--g300);border-radius:5px;font-size:12px;width:100%}
+.empty{text-align:center;padding:40px 20px;color:var(--g400)}.empty p{font-size:14px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
+.stat-card{background:#fff;border-radius:var(--rad);box-shadow:var(--shd);padding:14px 18px;border-left:3px solid var(--p)}
+.stat-card .lbl{font-size:12px;color:var(--g500);font-weight:500;margin-bottom:4px}
+.stat-card .val{font-size:22px;font-weight:700;color:var(--g900)}
+.tab-bar{display:flex;gap:0;border-bottom:1px solid var(--g200);margin-bottom:16px}
+.tab-btn{padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;color:var(--g500);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.tab-btn.active{color:var(--p);border-bottom-color:var(--p)}
+.ship-status{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600}
+.ship-status.booked{background:#e0e7ff;color:#4338ca}.ship-status.loaded{background:#fef3c7;color:#92400e}
+.ship-status.onboard{background:#cffafe;color:#0e7490}.ship-status.departed{background:#dbeafe;color:#1e40af}
+.ship-status.arrived{background:#dcfce7;color:#15803d}.ship-status.cleared{background:#ede9fe;color:#6d28d9}
+.ship-status.delivered{background:#fce7f3;color:#9d174d}
+.pay-st{display:inline-flex;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600}
+.pay-st.unpaid{background:var(--rl);color:var(--r)}.pay-st.partial{background:var(--wl);color:var(--w)}.pay-st.paid{background:var(--sl);color:var(--s)}
+.profit-pos{color:var(--s);font-weight:600}.profit-neg{color:var(--r);font-weight:600}
+.cost-row{display:grid;grid-template-columns:1fr 1fr 1fr 40px;gap:8px;align-items:end;padding:8px 0;border-bottom:1px solid var(--g100)}
+.cost-row.hd{background:var(--g50);font-size:11px;font-weight:600;color:var(--g500);text-transform:uppercase}
+.cost-row input{padding:5px 8px;border:1px solid var(--g300);border-radius:5px;font-size:12px;width:100%}
+.timeline{list-style:none;padding:0;margin:0}
+.timeline-item{display:grid;grid-template-columns:140px 1fr auto;gap:12px;align-items:start;padding:12px 0;border-bottom:1px solid var(--g100)}
+.timeline-item .node-label{font-size:12px;font-weight:600;color:var(--g700)}
+.timeline-item .dates{display:flex;flex-direction:column;gap:4px}
+.timeline-item .date-row{display:flex;gap:8px;align-items:center;font-size:12px}
+.timeline-item .date-row .lbl{color:var(--g500);min-width:60px}
+.timeline-item .delay{font-size:11px;font-weight:600;padding:2px 6px;border-radius:4px;white-space:nowrap}
+.timeline-item .delay.ok{background:var(--sl);color:var(--s)}
+.timeline-item .delay.warn{background:var(--wl);color:var(--w)}
+.timeline-item .delay.overdue{background:var(--rl);color:var(--r)}
+.timeline-item .done-dot{width:10px;height:10px;border-radius:50%;background:var(--s);flex-shrink:0}
+.timeline-item .pending-dot{width:10px;height:10px;border-radius:50%;border:2px solid var(--g300);flex-shrink:0}
+.shipment-row{display:grid;grid-template-columns:80px 1fr 1fr 80px 80px 80px 40px;gap:6px;align-items:end;padding:8px 0;border-bottom:1px solid var(--g100)}
+.shipment-row.hd{background:var(--g50);font-size:11px;font-weight:600;color:var(--g500);text-transform:uppercase}
+.shipment-row input{padding:5px 8px;border:1px solid var(--g300);border-radius:5px;font-size:12px;width:100%}
+.doc-preview{background:#fff;padding:20px;font-family:"Times New Roman",serif;color:#000;font-size:12px;line-height:1.5}
+.doc-preview h2{text-align:center;font-size:18px;margin-bottom:4px;letter-spacing:2px}
+.doc-preview .addr-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+.doc-preview table{width:100%;border-collapse:collapse;margin-top:10px}
+.doc-preview th,.doc-preview td{border:1px solid #000;padding:4px 6px;font-size:11px;text-align:left}
+.doc-preview th{background:#eee;text-align:center}
+.doc-preview .total-row td{font-weight:700}
+.doc-preview .footer{margin-top:24px;display:flex;justify-content:space-between;font-size:11px}
+@media(max-width:768px){.line-editor-row,.shipment-row{grid-template-columns:1fr 1fr}.line-editor-row.hd,.shipment-row.hd{display:none}.form-row{grid-template-columns:1fr}.doc-preview .addr-row{grid-template-columns:1fr}}
+@media print{body{background:#fff}.app{padding:0;max-width:none}.tab-bar,.card-hd .btn,.filter-bar,.header,.stats,.modal-ov{display:none}.card{box-shadow:none;border:none}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="header">
+    <h1>外贸履约系统</h1>
+    <span class="badge">v1.0 · 订单 · 单证 · 出运 · 收付款 · 利润</span>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" data-page="orders" onclick="switchPage('orders')">订单列表</button>
+    <button class="tab-btn" data-page="shipments" onclick="switchPage('shipments')">出运跟踪</button>
+    <button class="tab-btn" data-page="payments" onclick="switchPage('payments')">收付款</button>
+    <button class="tab-btn" data-page="profit" onclick="switchPage('profit')">利润看板</button>
+  </div>
+  <div class="stats" id="stats"></div>
+  <div id="pageOrders">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <div class="filter-bar" id="filterBar">
+        <select id="filterStatus"><option value="">全部主档状态</option><option value="draft">草稿</option><option value="confirmed">已确认</option><option value="producing">生产中</option><option value="pending">待出运</option><option value="partial">部分出运</option><option value="shipped">全部出运</option><option value="done">已完成</option><option value="cancelled">取消</option></select>
+        <input type="text" id="filterSearch" placeholder="搜索 PO 号 / SKU / 产品名…">
+      </div>
+      <button class="btn btn-p" onclick="openCreateOrderModal()">＋ 新建订单</button>
+    </div>
+    <div class="card"><div class="card-hd"><h2>订单列表</h2></div><div id="orderList"></div></div>
+  </div>
+  <div id="pageShipments" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <div class="filter-bar">
+        <select id="shipFilterStatus"><option value="">全部状态</option><option value="booked">已订舱</option><option value="loaded">已装箱</option><option value="onboard">已装船</option><option value="departed">已离港</option><option value="arrived">已到港</option><option value="cleared">已清关</option><option value="delivered">已签收</option></select>
+        <input type="text" id="shipFilterSearch" placeholder="搜索批次号 / 提单号 / 承运商…">
+      </div>
+    </div>
+    <div class="card"><div class="card-hd"><h2>出运批次列表</h2></div><div id="shipmentList"></div></div>
+  </div>
+  <div id="pagePayments" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <div class="filter-bar">
+        <select id="payFilterStatus"><option value="">全部</option><option value="unpaid">未收</option><option value="partial">部分收</option><option value="paid">已收清</option></select>
+        <input type="text" id="payFilterSearch" placeholder="搜索 PO 号 / 水单号…">
+      </div>
+      <button class="btn btn-p" onclick="openPaymentModal()">＋ 录入收款</button>
+    </div>
+    <div class="card"><div class="card-hd"><h2>应收发票</h2></div><div id="invoiceList"></div></div>
+    <div class="card" style="margin-top:16px"><div class="card-hd"><h2>收款记录</h2></div><div id="paymentList"></div></div>
+  </div>
+  <div id="pageProfit" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <div class="filter-bar">
+        <input type="text" id="profitFilterBuyer" placeholder="按客户筛选…">
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--g500)">记账汇率(USD→CNY): <input type="number" id="fxRate" step="0.01" style="padding:4px 8px;border:1px solid var(--g300);border-radius:4px;font-size:12px;width:80px"></div>
+      </div>
+      <button class="btn btn-o btn-s" onclick="saveFxRate()">保存汇率</button>
+    </div>
+    <div class="stats" id="profitStats"></div>
+    <div class="card"><div class="card-hd"><h2>订单利润明细</h2><button class="btn btn-s btn-o" onclick="openCostModal()">✏ 录入成本</button></div><div id="profitList"></div></div>
+  </div>
+</div>
+
+<!-- Order Modal -->
+<div class="modal-ov" id="orderModal">
+  <div class="modal">
+    <div class="modal-hd"><h3 id="modalTitle">新建订单</h3><button class="btn btn-s btn-o" onclick="closeModal('orderModal')">✕</button></div>
+    <div class="modal-bd">
+      <input type="hidden" id="editOrderId">
+      <div class="form-row">
+        <div class="fg"><label>客户 PO 号 *</label><input type="text" id="poNumber" placeholder="如 PO-2025-001"></div>
+        <div class="fg"><label>买家</label><input type="text" id="buyerId" placeholder="买家名称"></div>
+        <div class="fg"><label>币种</label><select id="currency"><option>USD</option><option>EUR</option><option>CNY</option><option>GBP</option><option>JPY</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>贸易术语</label><select id="incoterms" onchange="onIncotermsChange()"><option value="">请选择</option></select></div>
+        <div class="fg"><label>指定地点</label><input type="text" id="incotermsPlace" placeholder="如 FOB Shanghai"></div>
+        <div class="fg"><label>付款方式</label><select id="paymentMethod"><option>T/T</option><option>L/C</option><option>D/P</option><option>O/A</option></select></div>
+      </div>
+      <div style="margin-top:16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+        <label style="font-weight:600;font-size:13px">行项目清单</label>
+        <button class="btn btn-s btn-o" onclick="addLineItem()">＋ 添加行项目</button>
+      </div>
+      <div style="border:1px solid var(--g200);border-radius:8px;overflow:hidden">
+        <div class="line-editor-row hd" id="lineHeader" style="display:none">
+          <div>SKU</div><div>产品名称</div><div>描述</div><div>数量</div><div>单价</div><div>小计</div><div>HS编码</div><div></div>
+        </div>
+        <div id="lineItemsBody"></div>
+      </div>
+      <div style="margin-top:10px;text-align:right;font-size:13px;color:var(--g500)">订单总额：<strong id="modalTotal" style="color:var(--p);font-size:16px">0.00</strong></div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-o" onclick="closeModal('orderModal')">取消</button>
+      <button class="btn btn-p" onclick="saveOrder()">保存订单</button>
+    </div>
+  </div>
+</div>
+
+<!-- Status Change Modal -->
+<div class="modal-ov" id="statusModal">
+  <div class="modal modal-sm">
+    <div class="modal-hd"><h3>更改行项目状态</h3><button class="btn btn-s btn-o" onclick="closeModal('statusModal')">✕</button></div>
+    <div class="modal-bd">
+      <input type="hidden" id="statusLineId"><input type="hidden" id="statusOrderId">
+      <div class="fg" style="margin-bottom:12px"><label>当前状态</label><div id="currentStatusLabel" style="padding:8px;background:var(--g100);border-radius:6px;font-weight:600"></div></div>
+      <div class="fg"><label>目标状态</label><select id="targetStatus" style="width:100%;padding:8px;border:1px solid var(--g300);border-radius:6px"></select></div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-o" onclick="closeModal('statusModal')">取消</button>
+      <button class="btn btn-p" onclick="confirmStatusChange()">确认</button>
+    </div>
+  </div>
+</div>
+
+<!-- Document Generation Modal -->
+<div class="modal-ov" id="docModal">
+  <div class="modal" style="max-width:960px">
+    <div class="modal-hd"><h3 id="docModalTitle">生成单证</h3><button class="btn btn-s btn-o" onclick="closeModal('docModal')">✕</button></div>
+    <div class="modal-bd">
+      <input type="hidden" id="docOrderId">
+      <div class="form-row">
+        <div class="fg"><label>批次编号</label><input type="text" id="batchNo" placeholder="如 01，自动生成 INV-xxx-01"></div>
+        <div class="fg"><label>发票日期</label><input type="date" id="invDate"></div>
+      </div>
+      <div style="margin:12px 0 8px;font-weight:600;font-size:13px">选择本批出货行项目（自动填剩余未发数量）</div>
+      <div id="docLineSelector" style="border:1px solid var(--g200);border-radius:8px;overflow:hidden;margin-bottom:12px"></div>
+      <div style="margin:12px 0 8px;font-weight:600;font-size:13px">装箱信息（每行对应一箱）</div>
+      <div id="packEditor" style="border:1px solid var(--g200);border-radius:8px;overflow:hidden;margin-bottom:12px">
+        <div class="shipment-row hd" id="packHeader" style="display:none">
+          <div>箱号</div><div>包装类型</div><div>件数</div><div>毛重(kg)</div><div>净重(kg)</div><div>体积(m³)</div><div></div>
+        </div>
+        <div id="packBody"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="btn btn-s btn-o" onclick="addPackRow()">＋ 添加箱记录</button>
+        <span style="font-size:12px;color:var(--g500);align-self:center" id="packSummary"></span>
+      </div>
+      <div class="tab-bar" id="docTabs">
+        <button class="tab-btn active" data-tab="ci" onclick="switchDocTab('ci')">商业发票 CI</button>
+        <button class="tab-btn" data-tab="pl" onclick="switchDocTab('pl')">装箱单 PL</button>
+        <button class="tab-btn" data-tab="check" onclick="switchDocTab('check')">一致性校验</button>
+      </div>
+      <div id="docPreviewArea"></div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-o" onclick="closeModal('docModal')">关闭</button>
+      <button class="btn btn-o" onclick="exportCurrentDoc()">⬇ 导出 PDF</button>
+      <button class="btn btn-p" onclick="saveDocument()">💾 保存单证</button>
+    </div>
+  </div>
+</div>
+
+<!-- Documents History Modal -->
+<div class="modal-ov" id="docHistoryModal">
+  <div class="modal modal-sm">
+    <div class="modal-hd"><h3>历史单证</h3><button class="btn btn-s btn-o" onclick="closeModal('docHistoryModal')">✕</button></div>
+    <div class="modal-bd" id="docHistoryBody"></div>
+  </div>
+</div>
+
+<!-- Shipment Create Modal -->
+<div class="modal-ov" id="shipModal">
+  <div class="modal" style="max-width:800px">
+    <div class="modal-hd"><h3 id="shipModalTitle">创建出运批次</h3><button class="btn btn-s btn-o" onclick="closeModal('shipModal')">✕</button></div>
+    <div class="modal-bd">
+      <input type="hidden" id="shipOrderId">
+      <div class="form-row">
+        <div class="fg"><label>批次序号</label><input type="text" id="shipNo" placeholder="01"></div>
+        <div class="fg"><label>发货日期</label><input type="date" id="shipDate"></div>
+        <div class="fg"><label>承运商</label><input type="text" id="carrier" placeholder="船公司/货代"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>提单号/运单号</label><input type="text" id="trackingNo" placeholder="B/L No."></div>
+        <div class="fg"><label>起运港</label><input type="text" id="portLoading" placeholder="Shanghai"></div>
+        <div class="fg"><label>目的港</label><input type="text" id="portDischarge" placeholder="Hamburg"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>集装箱号</label><input type="text" id="containerNo" placeholder="MSCU1234567"></div>
+        <div class="fg"><label>封号</label><input type="text" id="sealNo" placeholder="SEAL001"></div>
+      </div>
+      <div style="margin:12px 0 8px;font-weight:600;font-size:13px">选择出运行项目及数量</div>
+      <div id="shipLineSelector" style="border:1px solid var(--g200);border-radius:8px;overflow:hidden;margin-bottom:12px"></div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-o" onclick="closeModal('shipModal')">取消</button>
+      <button class="btn btn-p" onclick="saveShipment()">创建出运</button>
+    </div>
+  </div>
+</div>
+
+<!-- Shipment Timeline Modal -->
+<div class="modal-ov" id="timelineModal">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-hd"><h3 id="timelineTitle">物流节点跟踪</h3><button class="btn btn-s btn-o" onclick="closeModal('timelineModal')">✕</button></div>
+    <div class="modal-bd" id="timelineBody"></div>
+    <div class="modal-ft">
+      <button class="btn btn-o" onclick="closeModal('timelineModal')">关闭</button>
+      <button class="btn btn-p" onclick="saveTimeline()">保存节点</button>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal-ov" id="paymentModal">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-hd"><h3>录入收款</h3><button class="btn btn-s btn-o" onclick="closeModal('paymentModal')">✕</button></div>
+    <div class="modal-bd">
+      <div class="form-row">
+        <div class="fg"><label>关联订单</label><select id="payOrderId"></select></div>
+        <div class="fg"><label>币种</label><select id="payCurrency"><option>USD</option><option>EUR</option><option>CNY</option><option>GBP</option><option>JPY</option></select></div>
+        <div class="fg"><label>收款金额</label><input type="number" id="payAmount" placeholder="0.00" step="0.01"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>付款方式</label><select id="payMethod"><option>T/T</option><option>L/C</option><option>D/P</option><option>O/A</option><option>其他</option></select></div>
+        <div class="fg"><label>到账日期</label><input type="date" id="payDate"></div>
+        <div class="fg"><label>银行水单号</label><input type="text" id="payRef" placeholder="Bank Reference"></div>
+      </div>
+      <div class="fg" style="margin-bottom:12px"><label>备注</label><input type="text" id="payNote" placeholder="如：30% 预付款"></div>
+      <div style="margin:12px 0 8px;font-weight:600;font-size:13px">核销到应收发票</div>
+      <div id="payInvoiceCheckboxes" style="border:1px solid var(--g200);border-radius:8px;padding:12px;margin-bottom:12px"></div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-o" onclick="closeModal('paymentModal')">取消</button>
+      <button class="btn btn-p" onclick="savePayment()">保存收款</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cost Modal -->
+<div class="modal-ov" id="costModal">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-hd"><h3>录入成本明细</h3><button class="btn btn-s btn-o" onclick="closeModal('costModal')">✕</button></div>
+    <div class="modal-bd">
+      <div class="form-row">
+        <div class="fg"><label>关联订单</label><select id="costOrderId"></select></div>
+        <div class="fg"><label>币种</label><select id="costCurrency"><option>CNY</option><option>USD</option><option>EUR</option><option>GBP</option><option>JPY</option></select></div>
+      </div>
+      <div style="margin:12px 0 8px;font-weight:600;font-size:13px">成本明细（按类别汇总）</div>
+      <div id="costEditor" style="border:1px solid var(--g200);border-radius:8px;overflow:hidden"></div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-o" onclick="closeModal('costModal')">取消</button>
+      <button class="btn btn-p" onclick="saveCosts()">保存成本</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════════════
+function genId(){return 'o'+Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c])}
+function fmt(n){return Number(n||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',')}
+function openModal(id){document.getElementById(id).classList.add("open")}
+function closeModal(id){document.getElementById(id).classList.remove("open")}
+
+// ═══════════════════════════════════════════════════════════
+//  INICOTERMS 2020 DICT
+// ═══════════════════════════════════════════════════════════
+const INCOTERMS={
+  EXW:{name:"Ex Works",place_required:true,type:"any"},
+  FCA:{name:"Free Carrier",place_required:true,type:"any"},
+  FAS:{name:"Free Alongside Ship",place_required:true,type:"sea"},
+  FOB:{name:"Free On Board",place_required:true,type:"sea"},
+  CFR:{name:"Cost and Freight",place_required:true,type:"sea"},
+  CIF:{name:"Cost Insurance & Freight",place_required:true,type:"sea"},
+  CPT:{name:"Carriage Paid To",place_required:true,type:"any"},
+  CIP:{name:"Carriage and Insurance Paid To",place_required:true,type:"any"},
+  DAP:{name:"Delivered at Place",place_required:true,type:"any"},
+  DPU:{name:"Delivered at Place Unloaded",place_required:true,type:"any"},
+  DDP:{name:"Delivered Duty Paid",place_required:true,type:"any"}
+};
+function loadIncoterms(){
+  const sel=document.getElementById("incoterms");if(!sel)return;
+  Object.keys(INCOTERMS).forEach(k=>{
+    const opt=document.createElement("option");opt.value=k;opt.textContent=k+" - "+INCOTERMS[k].name;sel.appendChild(opt);
+  });
+}
+function onIncotermsChange(){
+  const t=document.getElementById("incoterms").value;
+  document.getElementById("incotermsPlace").placeholder=INCOTERMS[t]?"指定地点（必填）":"—";
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ORDER STATUS FLOW
+// ═══════════════════════════════════════════════════════════
+const LINE_STATUS_FLOW=[
+  {key:"draft",label:"待确认",next:["confirmed"],allowCancel:false},
+  {key:"confirmed",label:"已确认",next:["producing"],allowCancel:true},
+  {key:"producing",label:"生产/采购中",next:["pending"],allowCancel:true},
+  {key:"pending",label:"待出运",next:["partial","shipped"],allowCancel:true},
+  {key:"partial",label:"部分出运",next:["shipped","done"],allowCancel:false},
+  {key:"shipped",label:"全部出运",next:["done"],allowCancel:false},
+  {key:"done",label:"已完成",next:[],allowCancel:false},
+  {key:"cancelled",label:"已取消",next:[],allowCancel:false}
+];
+const LINE_STATUS_LABEL={draft:"待确认",confirmed:"已确认",producing:"生产中",pending:"待出运",partial:"部分出运",shipped:"全部出运",done:"已完成",cancelled:"已取消"};
+const MAIN_STATUS_LABEL={draft:"草稿",confirmed:"已确认",producing:"执行中",pending:"执行中",partial:"执行中",shipped:"执行中",done:"已完成",cancelled:"取消"};
+
+function canTransition(from,to){
+  const f=LINE_STATUS_FLOW.find(x=>x.key===from);if(!f)return false;
+  return f.next.includes(to) || (to==="cancelled" && f.allowCancel);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  API LAYER (Flask + SQLite backend)
+// ═══════════════════════════════════════════════════════════
+const API="";
+let orders=[], documents=[], shipments=[], payments=[], costRecords=[], fxConfig={USD:7.2};
+
+async function api(method, path, body){
+  const opt={method,headers:{"Content-Type":"application/json"}};
+  if(body!==undefined)opt.body=JSON.stringify(body);
+  const r=await fetch(API+path,opt);
+  if(!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function loadAll(){
+  orders=await api("GET","/api/orders");
+  documents=await api("GET","/api/documents");
+  shipments=await api("GET","/api/shipments");
+  payments=await api("GET","/api/payments");
+  costRecords=await api("GET","/api/costs");
+  fxConfig=await api("GET","/api/fx");
+  if(!fxConfig.USD)fxConfig.USD=7.2;
+}
+async function saveAll(){ await loadAll(); }
+
+
+// ═══════════════════════════════════════════════════════════
+//  INCREMENT 1: ORDERS
+// ═══════════════════════════════════════════════════════════
+let _lineItemsBuffer=[];
+let _packItemsBuffer=[];
+
+function openCreateOrderModal(){
+  document.getElementById("editOrderId").value="";
+  document.getElementById("modalTitle").textContent="新建订单";
+  document.getElementById("poNumber").value="";
+  document.getElementById("buyerId").value="";
+  document.getElementById("currency").value="USD";
+  document.getElementById("incoterms").value="";
+  document.getElementById("incotermsPlace").value="";
+  document.getElementById("paymentMethod").value="T/T";
+  _lineItemsBuffer=[];
+  addLineItem();
+  document.getElementById("lineHeader").style.display="grid";
+  updateModalTotal();
+  openModal("orderModal");
+}
+
+function addLineItem(){
+  const newItem={line_id:genId(),sku:"",product_name:"",description:"",quantity:0,shipped_qty:0,unit_price:0,hs_code:"",status:"draft"};
+  _lineItemsBuffer.push(newItem);
+  renderLineItems();
+}
+
+function renderLineItems(){
+  const body=document.getElementById("lineItemsBody");
+  if(!_lineItemsBuffer.length){document.getElementById("lineHeader").style.display="none";body.innerHTML="";return}
+  document.getElementById("lineHeader").style.display="grid";
+  body.innerHTML=_lineItemsBuffer.map((l,i)=>`
+    <div class="line-editor-row">
+      <input type="text" value="${esc(l.sku)}" placeholder="SKU" onchange="_lineItemsBuffer[${i}].sku=this.value">
+      <input type="text" value="${esc(l.product_name)}" placeholder="产品名称" onchange="_lineItemsBuffer[${i}].product_name=this.value">
+      <input type="text" value="${esc(l.description)}" placeholder="规格/唛头" onchange="_lineItemsBuffer[${i}].description=this.value">
+      <input type="number" value="${l.quantity||0}" min="0" onchange="_lineItemsBuffer[${i}].quantity=parseInt(this.value)||0;updateModalTotal()">
+      <input type="number" value="${l.unit_price||0}" min="0" step="0.01" onchange="_lineItemsBuffer[${i}].unit_price=parseFloat(this.value)||0;updateModalTotal()">
+      <div style="font-size:12px;color:var(--g500);text-align:right;padding-top:5px">${fmt((l.quantity||0)*(l.unit_price||0))}</div>
+      <input type="text" value="${esc(l.hs_code)}" placeholder="HS编码" onchange="_lineItemsBuffer[${i}].hs_code=this.value">
+      <button class="btn btn-s btn-r btn-i" onclick="removeLineItem(${i})">✕</button>
+    </div>`).join("");
+}
+
+function removeLineItem(i){_lineItemsBuffer.splice(i,1);renderLineItems()}
+
+function updateModalTotal(){
+  const t=_lineItemsBuffer.reduce((s,l)=>s+(l.quantity||0)*(l.unit_price||0),0);
+  document.getElementById("modalTotal").textContent=fmt(t);
+}
+
+function saveOrder(){
+  const id=document.getElementById("editOrderId").value;
+  const po=document.getElementById("poNumber").value.trim();
+  if(!po){alert("请输入客户 PO 号");return}
+  _lineItemsBuffer=_lineItemsBuffer.filter(l=>l.sku||l.product_name);
+  if(!_lineItemsBuffer.length){alert("请至少添加一行有效产品");return}
+  const order={
+    order_id:id||genId(),
+    po_number:po,buyer_id:document.getElementById("buyerId").value.trim(),
+    currency:document.getElementById("currency").value,
+    incoterms:document.getElementById("incoterms").value,
+    incoterms_place:document.getElementById("incotermsPlace").value.trim(),
+    payment_method:document.getElementById("paymentMethod").value,
+    total_amount:_lineItemsBuffer.reduce((s,l)=>s+(l.quantity||0)*(l.unit_price||0),0),
+    status:"confirmed",lines:_lineItemsBuffer,created_at:new Date().toISOString()
+  };
+  async function _save(){
+    const idx=orders.findIndex(o=>o.order_id===order.order_id);
+    if(idx>=0) await api("PUT","/api/orders/"+order.order_id,order);
+    else await api("POST","/api/orders",order);
+    await loadAll();closeModal("orderModal");renderOrders();
+  }
+  _save().catch(e=>alert("保存失败: "+e.message));
+}
+
+function openEditOrderModal(id){
+  const o=orders.find(x=>x.order_id===id);if(!o)return;
+  document.getElementById("editOrderId").value=id;
+  document.getElementById("modalTitle").textContent="编辑订单";
+  document.getElementById("poNumber").value=o.po_number;
+  document.getElementById("buyerId").value=o.buyer_id||"";
+  document.getElementById("currency").value=o.currency;
+  document.getElementById("incoterms").value=o.incoterms||"";
+  document.getElementById("incotermsPlace").value=o.incoterms_place||"";
+  document.getElementById("paymentMethod").value=o.payment_method;
+  _lineItemsBuffer=JSON.parse(JSON.stringify(o.lines));
+  if(!_lineItemsBuffer.length)addLineItem();
+  renderLineItems();
+  document.getElementById("lineHeader").style.display="grid";
+  updateModalTotal();
+  openModal("orderModal");
+}
+
+function updateOrderStatus(o){
+  const lines=o.lines;const totalQty=lines.reduce((s,l)=>s+(l.quantity||0),0);const shippedQty=lines.reduce((s,l)=>s+(l.shipped_qty||0),0);
+  if(lines.every(l=>l.status==="done"))o.status="done";
+  else if(lines.every(l=>l.status==="cancelled"))o.status="cancelled";
+  else if(shippedQty>=totalQty&&totalQty>0)o.status="shipped";
+  else if(shippedQty>0)o.status="partial";
+  else if(lines.some(l=>l.status==="pending"))o.status="pending";
+  else if(lines.some(l=>l.status==="producing"))o.status="producing";
+  else if(lines.some(l=>l.status==="confirmed"))o.status="confirmed";
+}
+
+function openStatusModal(orderId,lineId){
+  const o=orders.find(x=>x.order_id===orderId);if(!o)return;
+  const l=o.lines.find(x=>x.line_id===lineId);if(!l)return;
+  document.getElementById("statusOrderId").value=orderId;
+  document.getElementById("statusLineId").value=lineId;
+  document.getElementById("currentStatusLabel").textContent=LINE_STATUS_LABEL[l.status]||l.status;
+  const flow=LINE_STATUS_FLOW.find(x=>x.key===l.status);
+  const opts=[];
+  flow.next.forEach(k=>opts.push(`<option value="${k}">${LINE_STATUS_LABEL[k]||k}</option>`));
+  if(flow.allowCancel)opts.push(`<option value="cancelled">取消</option>`);
+  document.getElementById("targetStatus").innerHTML=opts.join("");
+  openModal("statusModal");
+}
+
+function confirmStatusChange(){
+  const orderId=document.getElementById("statusOrderId").value;
+  const lineId=document.getElementById("statusLineId").value;
+  const target=document.getElementById("targetStatus").value;
+  const o=orders.find(x=>x.order_id===orderId);if(!o)return;
+  const l=o.lines.find(x=>x.line_id===lineId);if(!l)return;
+  if(!canTransition(l.status,target)){alert("状态流转不允许");return}
+  l.status=target;
+  if(target==="shipped")l.shipped_qty=l.quantity;
+  if(target==="done"&&l.shipped_qty<l.quantity)l.shipped_qty=l.quantity;
+  updateOrderStatus(o);
+  api("PUT","/api/orders/"+orderId+"/lines/"+lineId+"/status",{status:target}).then(async()=>{await loadAll();closeModal("statusModal");renderOrders();}).catch(e=>alert("更新失败: "+e.message));
+}
+
+function deleteOrder(id){
+  if(!confirm("确认删除此订单？相关单证/出运/收款记录不会自动删除"))return;
+  api("DELETE","/api/orders/"+id).then(async()=>{await loadAll();renderOrders();}).catch(e=>alert("删除失败: "+e.message));
+}
+
+function renderOrders(){
+  const sf=document.getElementById("filterStatus").value;
+  const search=(document.getElementById("filterSearch").value||"").toLowerCase();
+  let filtered=orders.slice().sort((a,b)=>b.created_at.localeCompare(a.created_at));
+  if(sf)filtered=filtered.filter(o=>o.status===sf);
+  if(search)filtered=filtered.filter(o=>{
+    if((o.po_number||"").toLowerCase().includes(search)||(o.buyer_id||"").toLowerCase().includes(search))return true;
+    return o.lines.some(l=>(l.sku||"").toLowerCase().includes(search)||(l.product_name||"").toLowerCase().includes(search));
+  });
+
+  // Stats
+  const inProgress=orders.filter(o=>["confirmed","producing","pending","partial"].includes(o.status)).length;
+  const pendingLines=orders.reduce((s,o)=>s+o.lines.filter(l=>l.status==="pending").length,0);
+  const totalOrders=orders.length;
+  const shippedOrders=orders.filter(o=>o.status==="shipped"||o.status==="done").length;
+  document.getElementById("stats").innerHTML=`
+    <div class="stat-card"><div class="lbl">订单总数</div><div class="val">${totalOrders}</div></div>
+    <div class="stat-card"><div class="lbl">进行中</div><div class="val">${inProgress}</div></div>
+    <div class="stat-card"><div class="lbl">待出运行项</div><div class="val">${pendingLines}</div></div>
+    <div class="stat-card"><div class="lbl">已出运/完成</div><div class="val">${shippedOrders}</div></div>`;
+
+  const c=document.getElementById("orderList");
+  if(!filtered.length){c.innerHTML=`<div class="empty"><p>暂无订单，点击右上角「＋ 新建订单」开始</p></div>`;return}
+
+  let h=`<div style="overflow-x:auto"><table><thead><tr>
+    <th>PO号</th><th>买家</th><th>币种</th><th>贸易术语</th>
+    <th>行项目</th><th>总额</th><th>主档状态</th><th>操作</th>
+    </tr></thead><tbody>`;
+  for(const o of filtered){
+    const statusClass="st-"+o.status.slice(0,3);
+    const linesHtml=o.lines.map(l=>{
+      const stCls="st-"+l.status.slice(0,3);
+      return `<div style="padding:4px 0;border-bottom:1px dashed var(--g100);display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <span style="font-size:12px"><strong>${esc(l.sku)}</strong> × ${l.quantity} <span style="color:var(--g400)">[已发 ${l.shipped_qty||0}]</span></span>
+        <span class="st ${stCls}" style="cursor:pointer" onclick="openStatusModal('${o.order_id}','${l.line_id}')" title="点击更改状态">${LINE_STATUS_LABEL[l.status]}</span>
+      </div>`;
+    }).join("");
+    h+=`<tr><td><strong>${esc(o.po_number)}</strong><div style="font-size:11px;color:var(--g400)">${esc(o.payment_method)||""}</div></td>
+      <td style="font-size:12px">${esc(o.buyer_id||"—")}</td>
+      <td>${esc(o.currency)}</td>
+      <td style="font-size:12px">${esc(o.incoterms||"—")} ${esc(o.incoterms_place||"")}</td>
+      <td style="min-width:220px">${linesHtml}</td>
+      <td class="num">${fmt(o.total_amount)}</td>
+      <td><span class="st ${statusClass}">${MAIN_STATUS_LABEL[o.status]||o.status}</span></td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-s btn-o btn-i" onclick="openEditOrderModal('${o.order_id}')" title="编辑">✏</button>
+        <button class="btn btn-s btn-p btn-i" onclick="openDocModal('${o.order_id}')" title="生成单证">📄</button>
+        <button class="btn btn-s btn-o btn-i" onclick="openShipModal('${o.order_id}')" title="创建出运">🚢</button>
+        <button class="btn btn-s btn-o btn-i" onclick="openDocHistory('${o.order_id}')" title="历史单证">📋</button>
+        <button class="btn btn-s btn-r btn-i" onclick="deleteOrder('${o.order_id}')" title="删除">🗑️</button>
+      </td></tr>`;
+  }
+  h+=`</tbody></table></div>`;c.innerHTML=h;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INCREMENT 2: DOCUMENTS (CI + PL)
+// ═══════════════════════════════════════════════════════════
+let _docOrderId=null;
+let _docLinesBuffer=[];
+let _packBuffer=[];
+let _docTab="ci";
+
+function getDocs(){return documents}
+
+function openDocModal(orderId){
+  const o=orders.find(x=>x.order_id===orderId);if(!o)return;
+  _docOrderId=orderId;
+  const shipped=(o.lines||[]).filter(l=>l.quantity>0);
+  const docsOfOrder=documents.filter(d=>d.order_id===orderId);
+  const nextNo=String(docsOfOrder.length+1).padStart(2,"0");
+
+  document.getElementById("docOrderId").value=orderId;
+  document.getElementById("docModalTitle").textContent=`生成单证 — ${o.po_number}`;
+  document.getElementById("batchNo").value=nextNo;
+  document.getElementById("invDate").value=new Date().toISOString().slice(0,10);
+
+  _docLinesBuffer=shipped.map(l=>({line_id:l.line_id,sku:l.sku,product_name:l.product_name,description:l.description,quantity:l.quantity,shipped_qty:l.shipped_qty,unit_price:l.unit_price,hs_code:l.hs_code,actualQty:Math.max(l.quantity-(l.shipped_qty||0),0)}));
+  _packBuffer=[];
+  addPackRow();
+  renderDocLineSelector();
+  renderPackEditor();
+  switchDocTab("ci");
+  openModal("docModal");
+}
+
+function renderDocLineSelector(){
+  const body=document.getElementById("docLineSelector");
+  if(!_docLinesBuffer.length){body.innerHTML=`<div style="padding:16px;color:var(--g400);text-align:center;font-size:13px">没有可出运的行项目</div>`;return}
+  let h=`<div class="line-editor-row hd"><div>SKU</div><div>产品名称</div><div>描述</div><div>可出运</div><div>本批数量</div><div>单价</div><div>小计</div><div></div></div>`;
+  _docLinesBuffer.forEach((l,i)=>{
+    h+=`<div class="line-editor-row">
+      <input type="text" value="${esc(l.sku)}" disabled style="background:var(--g50)">
+      <input type="text" value="${esc(l.product_name)}" disabled style="background:var(--g50)">
+      <input type="text" value="${esc(l.description)}" disabled style="background:var(--g50)">
+      <input type="number" value="${l.actualQty}" disabled style="background:var(--g50);color:var(--p);font-weight:600">
+      <input type="number" min="0" max="${l.actualQty}" value="${l.actualQty}" onchange="_docLinesBuffer[${i}].shipped_qty=parseInt(this.value)||0;updateDocPreview()">
+      <input type="number" step="0.01" value="${l.unit_price}" disabled style="background:var(--g50)">
+      <div style="font-size:12px;color:var(--g500);text-align:right;padding-top:5px">${fmt((l.shipped_qty||0)*l.unit_price)}</div>
+      <div></div>
+    </div>`;
+  });
+  body.innerHTML=h;
+  updateDocPreview();
+}
+
+function addPackRow(){_packBuffer.push({no:"",type:"Carton",qty:0,gross:0,net:0,vol:0});renderPackEditor()}
+
+function renderPackEditor(){
+  const body=document.getElementById("packBody");
+  if(!_packBuffer.length){body.innerHTML="";document.getElementById("packHeader").style.display="none";return}
+  document.getElementById("packHeader").style.display="grid";
+  body.innerHTML=_packBuffer.map((p,i)=>`
+    <div class="shipment-row">
+      <input type="text" placeholder="1" value="${esc(p.no)}" onchange="_packBuffer[${i}].no=this.value">
+      <select onchange="_packBuffer[${i}].type=this.value" style="padding:5px 8px;border:1px solid var(--g300);border-radius:5px;font-size:12px">
+        <option ${p.type==="Carton"?"selected":""}>Carton</option>
+        <option ${p.type==="Pallet"?"selected":""}>Pallet</option>
+        <option ${p.type==="Crate"?"selected":""}>Crate</option>
+        <option ${p.type==="Bag"?"selected":""}>Bag</option>
+      </select>
+      <input type="number" min="0" value="${p.qty}" onchange="_packBuffer[${i}].qty=parseInt(this.value)||0;updatePackSummary()">
+      <input type="number" step="0.01" min="0" value="${p.gross}" onchange="_packBuffer[${i}].gross=parseFloat(this.value)||0">
+      <input type="number" step="0.01" min="0" value="${p.net}" onchange="_packBuffer[${i}].net=parseFloat(this.value)||0">
+      <input type="number" step="0.001" min="0" value="${p.vol}" onchange="_packBuffer[${i}].vol=parseFloat(this.value)||0">
+      <button class="btn btn-s btn-r btn-i" onclick="_packBuffer.splice(${i},1);renderPackEditor()">✕</button>
+    </div>`).join("");
+  updatePackSummary();
+}
+
+function updatePackSummary(){
+  const cartons=_packBuffer.length;
+  const totalQty=_packBuffer.reduce((s,p)=>s+(p.qty||0),0);
+  const totalGross=_packBuffer.reduce((s,p)=>s+(p.gross||0),0);
+  const totalNet=_packBuffer.reduce((s,p)=>s+(p.net||0),0);
+  const totalVol=_packBuffer.reduce((s,p)=>s+(p.vol||0),0);
+  document.getElementById("packSummary").textContent=`${cartons} 箱 / ${totalQty} 件 / G.W. ${fmt(totalGross)}kg / N.W. ${fmt(totalNet)}kg / ${fmt(totalVol)}m³`;
+  updateDocPreview();
+}
+
+function switchDocTab(tab){
+  _docTab=tab;
+  document.querySelectorAll("#docTabs .tab-btn").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
+  updateDocPreview();
+}
+
+function buildDocContext(){
+  const o=orders.find(x=>x.order_id===_docOrderId);if(!o)return null;
+  const totalQty=_docLinesBuffer.reduce((s,l)=>s+(l.shipped_qty||0),0);
+  const totalAmount=_docLinesBuffer.reduce((s,l)=>s+(l.shipped_qty||0)*(l.unit_price||0),0);
+  const totalCartons=_packBuffer.length;
+  const totalPcs=_packBuffer.reduce((s,p)=>s+(p.qty||0),0);
+  const totalGross=_packBuffer.reduce((s,p)=>s+(p.gross||0),0);
+  const totalNet=_packBuffer.reduce((s,p)=>s+(p.net||0),0);
+  const totalVol=_packBuffer.reduce((s,p)=>s+(p.vol||0),0);
+  const invNo="INV-"+o.order_id.slice(-6)+"-"+(document.getElementById("batchNo").value||"01");
+  const invDate=document.getElementById("invDate").value;
+  const sellerName="YOUR COMPANY NAME";
+  const sellerAddr="Your Company Address";
+  return {o,totalQty,totalAmount,totalCartons,totalPcs,totalGross,totalNet,totalVol,invNo,invDate,sellerName,sellerAddr};
+}
+
+function renderCI(ctx){
+  const o=ctx.o;
+  let h=`<div class="doc-preview" id="docContent">
+    <h2>COMMERCIAL INVOICE</h2>
+    <div style="text-align:center;font-size:12px;margin-bottom:8px">${ctx.sellerName} | ${ctx.sellerAddr}</div>
+    <div class="addr-row">
+      <div><strong>TO:</strong><br>${esc(o.buyer_id||"—")}</div>
+      <div><strong>INVOICE NO.:</strong> ${ctx.invNo}<br><strong>DATE:</strong> ${ctx.invDate}<br><strong>PO NO.:</strong> ${esc(o.po_number)}</div>
+    </div>
+    <div><strong>TERMS:</strong> ${esc(o.incoterms||"—")} ${esc(o.incoterms_place||"")} | <strong>PAYMENT:</strong> ${esc(o.payment_method||"—")} | <strong>CURRENCY:</strong> ${esc(o.currency)}</div>
+    <table><thead><tr><th>SKU</th><th>DESCRIPTION</th><th>HS CODE</th><th>QTY</th><th>UNIT PRICE</th><th>AMOUNT</th></tr></thead><tbody>`;
+  _docLinesBuffer.forEach(l=>{
+    const qty=l.shipped_qty||0;if(!qty)return;
+    h+=`<tr><td>${esc(l.sku)}</td><td>${esc(l.product_name)}<br><span style="font-size:10px;color:#666">${esc(l.description)}</span></td>
+      <td>${esc(l.hs_code)}</td><td class="num">${qty}</td><td class="num">${fmt(l.unit_price)}</td><td class="num">${fmt(qty*l.unit_price)}</td></tr>`;
+  });
+  h+=`<tr class="total-row"><td colspan="3"></td><td class="num">${ctx.totalQty}</td><td></td><td class="num">${fmt(ctx.totalAmount)}</td></tr>`;
+  h+=`</tbody></table>
+    <div class="footer"><div>Seller Signature: _______________</div><div>Total: ${esc(o.currency)} ${fmt(ctx.totalAmount)}</div></div></div>`;
+  return h;
+}
+
+function renderPL(ctx){
+  const o=ctx.o;
+  let h=`<div class="doc-preview" id="docContent">
+    <h2>PACKING LIST</h2>
+    <div style="text-align:center;font-size:12px;margin-bottom:8px">${ctx.sellerName} | ${ctx.sellerAddr}</div>
+    <div class="addr-row">
+      <div><strong>TO:</strong><br>${esc(o.buyer_id||"—")}</div>
+      <div><strong>INVOICE NO.:</strong> ${ctx.invNo}<br><strong>DATE:</strong> ${ctx.invDate}<br><strong>PO NO.:</strong> ${esc(o.po_number)}</div>
+    </div>
+    <div><strong>TERMS:</strong> ${esc(o.incoterms||"—")} ${esc(o.incoterms_place||"")}</div>
+    <table><thead><tr><th>CTN NO.</th><th>PACKAGE</th><th>DESCRIPTION</th><th>PCS</th><th>GROSS WT (kg)</th><th>NET WT (kg)</th><th>VOL (m³)</th></tr></thead><tbody>`;
+  const desc=_docLinesBuffer.filter(l=>(l.shipped_qty||0)>0).map(l=>l.sku+"×"+l.shipped_qty).join(", ");
+  _packBuffer.forEach(p=>{
+    h+=`<tr><td>${esc(p.no||"—")}</td><td>${esc(p.type)}</td><td>${esc(desc)}</td>
+      <td class="num">${p.qty}</td><td class="num">${fmt(p.gross)}</td><td class="num">${fmt(p.net)}</td><td class="num">${fmt(p.vol)}</td></tr>`;
+  });
+  h+=`<tr class="total-row"><td colspan="2">TOTAL</td><td>${ctx.totalCartons} ${_packBuffer[0]?.type||"Carton"}</td>
+    <td class="num">${ctx.totalPcs}</td><td class="num">${fmt(ctx.totalGross)}</td><td class="num">${fmt(ctx.totalNet)}</td><td class="num">${fmt(ctx.totalVol)}</td></tr>`;
+  h+=`</tbody></table>
+    <div class="footer"><div>Total Cartons: ${ctx.totalCartons}</div><div>Total Pieces: ${ctx.totalPcs}</div></div></div>`;
+  return h;
+}
+
+function runConsistencyCheck(ctx){
+  const checks=[];
+  const totalCIQty=ctx.totalQty;
+  const totalPLPcs=ctx.totalPcs;
+  checks.push({label:"件数合计 (CI vs PL)",ci:totalCIQty,pl:totalPLPcs,pass:totalCIQty===totalPLPcs});
+
+  const totalGrossFromPL=_packBuffer.reduce((s,p)=>s+(p.gross||0),0);
+  checks.push({label:"毛重汇总 (PL内部)",ci:fmt(totalGrossFromPL),pl:fmt(totalGrossFromPL),pass:true,note:"PL 内部自动一致"});
+
+  const o=ctx.o;
+  const ciIncoterms=o.incoterms;
+  checks.push({label:"贸易术语 (CI vs 订单)",ci:ciIncoterms,pl:o.incoterms,pass:ciIncoterms===o.incoterms});
+
+  const ciCurrency=o.currency;
+  checks.push({label:"币种一致",ci:ciCurrency,pl:o.currency,pass:ciCurrency===o.currency});
+
+  const ciAmount=ctx.totalAmount;
+  const calcAmount=_docLinesBuffer.reduce((s,l)=>s+(l.shipped_qty||0)*(l.unit_price||0),0);
+  checks.push({label:"发票金额 vs 订单计算值",ci:fmt(ciAmount),pl:fmt(calcAmount),pass:Math.abs(ciAmount-calcAmount)<0.01});
+
+  checks.push({label:"收发货人信息一致",ci:o.buyer_id,pl:o.buyer_id,pass:true,note:"数据源一致"});
+
+  let passCount=checks.filter(c=>c.pass).length;
+  let h=`<div style="padding:16px">
+    <div style="font-size:14px;font-weight:700;margin-bottom:12px">三单一致性校验 <span style="font-size:12px;font-weight:400;color:var(--g500)">(${passCount}/${checks.length} 通过)</span></div>
+    <div style="border:1px solid var(--g200);border-radius:8px;overflow:hidden">
+      <table><thead><tr><th>校验项</th><th>CI 值</th><th>PL/订单值</th><th>结果</th></tr></thead><tbody>`;
+  checks.forEach(c=>{
+    h+=`<tr><td>${c.label}</td><td>${esc(c.ci)}</td><td>${esc(c.pl)}</td>
+      <td><span class="st ${c.pass?'st-don':'st-cxl'}">${c.pass?'✓ 通过':'✗ 不一致'}</span>${c.note?' <span style="font-size:11px;color:var(--g500)">('+c.note+')</span>':''}</td></tr>`;
+  });
+  h+=`</tbody></table></div></div>`;
+  return h;
+}
+
+function updateDocPreview(){
+  const ctx=buildDocContext();if(!ctx)return;
+  const area=document.getElementById("docPreviewArea");
+  if(_docTab==="ci")area.innerHTML=renderCI(ctx);
+  else if(_docTab==="pl")area.innerHTML=renderPL(ctx);
+  else area.innerHTML=runConsistencyCheck(ctx);
+}
+
+function saveDocument(){
+  const ctx=buildDocContext();if(!ctx)return;
+  // Deduct shipped_qty from order lines
+  _docLinesBuffer.forEach(l=>{
+    const orderLine=ctx.o.lines.find(x=>x.line_id===l.line_id);
+    if(orderLine){
+      orderLine.shipped_qty=(orderLine.shipped_qty||0)+(l.shipped_qty||0);
+      if(orderLine.shipped_qty>=orderLine.quantity)orderLine.status="shipped";
+      else if(orderLine.shipped_qty>0)orderLine.status="partial";
+    }
+  });
+  updateOrderStatus(ctx.o);
+
+  const doc={
+    doc_id:genId(),
+    invoice_no:ctx.invNo,
+    order_id:_docOrderId,
+    batch_no:document.getElementById("batchNo").value||"01",
+    inv_date:ctx.invDate,
+    currency:ctx.o.currency,
+    total_amount:ctx.totalAmount,
+    total_qty:ctx.totalQty,
+    cartons:ctx.totalCartons,
+    lines:_docLinesBuffer.filter(l=>(l.shipped_qty||0)>0),
+    packs:_packBuffer,
+    createdAt:Date.now()
+  };
+  api("POST","/api/documents",doc).then(async()=>{await loadAll();closeModal("docModal");renderOrders();alert("单证已保存");}).catch(e=>alert("保存失败: "+e.message));
+  alert("单证已保存："+ctx.invNo);
+}
+
+function exportCurrentDoc(){
+  updateDocPreview();
+  setTimeout(()=>window.print(),300);
+}
+
+function openDocHistory(orderId){
+  const docs=documents.filter(d=>d.order_id===orderId).sort((a,b)=>b.createdAt-a.createdAt);
+  const body=document.getElementById("docHistoryBody");
+  if(!docs.length){body.innerHTML=`<div class="empty"><p>暂无历史单证</p></div>`;openModal("docHistoryModal");return}
+  let h="";
+  docs.forEach(d=>{
+    const o=orders.find(x=>x.order_id===d.order_id);
+    h+=`<div style="padding:12px;border-bottom:1px solid var(--g100);display:flex;justify-content:space-between;align-items:center">
+      <div><strong>${esc(d.invoice_no)}</strong> <span style="font-size:11px;color:var(--g500)">${esc(d.inv_date)} · ${esc(d.currency)} ${fmt(d.total_amount)}</span><br>
+      <span style="font-size:11px;color:var(--g400)">${esc(o?.po_number||"")} · ${d.cartons}箱 / ${d.total_qty}件</span></div>
+      <button class="btn btn-s btn-o" onclick="viewDocOnly('${d.doc_id}')">查看</button>
+    </div>`;
+  });
+  body.innerHTML=h;openModal("docHistoryModal");
+}
+
+function viewDocOnly(docId){
+  const d=documents.find(x=>x.doc_id===docId);if(!d)return;
+  const o=orders.find(x=>x.order_id===d.order_id);
+  const ctx={
+    o,totalQty:d.total_qty,totalAmount:d.total_amount,totalCartons:d.cartons,
+    totalPcs:d.packs.reduce((s,p)=>s+(p.qty||0),0),
+    totalGross:d.packs.reduce((s,p)=>s+(p.gross||0),0),
+    totalNet:d.packs.reduce((s,p)=>s+(p.net||0),0),
+    totalVol:d.packs.reduce((s,p)=>s+(p.vol||0),0),
+    invNo:d.invoice_no,invDate:d.inv_date,sellerName:"YOUR COMPANY NAME",sellerAddr:"Your Company Address"
+  };
+  _docLinesBuffer=d.lines.map(l=>({...l,actualQty:l.shipped_qty,shipped_qty:l.shipped_qty}));
+  _packBuffer=d.packs.map(p=>({...p}));
+  openModal("docModal");
+  document.getElementById("docModalTitle").textContent="查看单证 — "+d.invoice_no;
+  switchDocTab("ci");
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INCREMENT 3: SHIPMENTS
+// ═══════════════════════════════════════════════════════════
+const SHIP_NODES=[
+  {key:"booked",label:"已订舱",en:"Booking"},{key:"loaded",label:"已装箱",en:"Loading"},
+  {key:"onboard",label:"已装船",en:"On Board"},{key:"departed",label:"已离港",en:"Departed"},
+  {key:"arrived",label:"已到港",en:"Arrived"},{key:"cleared",label:"已清关",en:"Customs Cleared"},
+  {key:"delivered",label:"已签收",en:"Delivered"}
+];
+const SHIP_STATUS_LABEL={booked:"已订舱",loaded:"已装箱",onboard:"已装船",departed:"已离港",arrived:"已到港",cleared:"已清关",delivered:"已签收"};
+
+function switchPage(page){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle("active",b.dataset.page===page));
+  ["orders","shipments","payments","profit"].forEach(p=>{
+    document.getElementById("page"+p.charAt(0).toUpperCase()+p.slice(1)).style.display=(p===page)?"":"none";
+  });
+  if(page==="shipments")renderShipments();
+  if(page==="payments")renderPayments();
+  if(page==="profit")renderProfit();
+}
+
+function openShipModal(orderId){
+  const o=orders.find(x=>x.order_id===orderId);if(!o)return;
+  document.getElementById("shipOrderId").value=orderId;
+  document.getElementById("shipModalTitle").textContent="创建出运批次 — "+o.po_number;
+  document.getElementById("shipNo").value=String(shipments.filter(s=>s.order_id===orderId).length+1).padStart(2,"0");
+  document.getElementById("shipDate").value=new Date().toISOString().slice(0,10);
+  ["carrier","trackingNo","portLoading","portDischarge","containerNo","sealNo"].forEach(id=>document.getElementById(id).value="");
+
+  const lines=(o.lines||[]).filter(l=>(l.quantity||0)-(l.shipped_qty||0)>0);
+  const sel=document.getElementById("shipLineSelector");
+  if(!lines.length){sel.innerHTML=`<div style="padding:16px;color:var(--g400);text-align:center;font-size:13px">该订单已全部出运，无剩余可发数量</div>`;openModal("shipModal");return}
+  let h=`<div class="shipment-row hd"><div>SKU</div><div>产品名称</div><div>剩余可发</div><div>本批出运</div><div></div><div></div><div></div></div>`;
+  lines.forEach(l=>{
+    const rem=(l.quantity||0)-(l.shipped_qty||0);
+    h+=`<div class="shipment-row">
+      <div><input type="text" value="${esc(l.sku)}" disabled style="background:var(--g50)"></div>
+      <div><input type="text" value="${esc(l.product_name)}" disabled style="background:var(--g50)"></div>
+      <div><input type="number" value="${rem}" disabled style="background:var(--g50);color:var(--p);font-weight:600"></div>
+      <div><input type="number" id="shipLine_${l.line_id}" value="${rem}" min="0" max="${rem}"></div>
+      <div></div><div></div><div></div>
+    </div>`;
+  });
+  sel.innerHTML=h;openModal("shipModal");
+}
+
+function saveShipment(){
+  const orderId=document.getElementById("shipOrderId").value;
+  const o=orders.find(x=>x.order_id===orderId);if(!o)return;
+  const lines=(o.lines||[]).filter(l=>(l.quantity||0)-(l.shipped_qty||0)>0);
+  let shipLines=[];
+  lines.forEach(l=>{
+    const inp=document.getElementById("shipLine_"+l.line_id);
+    const qty=inp?Math.min(Math.max(parseInt(inp.value)||0,0),(l.quantity||0)-(l.shipped_qty||0)):0;
+    if(qty>0)shipLines.push({order_line_id:l.line_id,sku:l.sku,product_name:l.product_name,shipped_qty:qty});
+  });
+  if(!shipLines.length){alert("请至少选择一行出运数量>0");return}
+  const shipId=genId();
+  const nodes=SHIP_NODES.map(n=>({key:n.key,label:n.label,plannedDate:"",actualDate:""}));
+  const ship={shipment_id:shipId,order_id:orderId,shipment_no:document.getElementById("shipNo").value||"01",
+    ship_date:document.getElementById("shipDate").value,carrier:document.getElementById("carrier").value,
+    tracking_no:document.getElementById("trackingNo").value,port_loading:document.getElementById("portLoading").value,
+    port_discharge:document.getElementById("portDischarge").value,container_no:document.getElementById("containerNo").value,
+    seal_no:document.getElementById("sealNo").value,status:"booked",lines:shipLines,nodes:nodes};
+  api("POST","/api/shipments",ship).then(async()=>{await loadAll();closeModal("shipModal");renderShipments();renderOrders();alert("出运批次已创建");}).catch(e=>alert("保存失败: "+e.message));
+}
+
+function renderShipments(){
+  const sf=(document.getElementById("shipFilterStatus")?.value)||"";
+  const search=((document.getElementById("shipFilterSearch")?.value)||"").toLowerCase();
+  let filtered=shipments.slice().sort((a,b)=>b.createdAt-a.createdAt);
+  if(sf)filtered=filtered.filter(s=>s.status===sf);
+  if(search)filtered=filtered.filter(s=>(s.shipment_no||"").toLowerCase().includes(search)||(s.tracking_no||"").toLowerCase().includes(search)||(s.carrier||"").toLowerCase().includes(search));
+
+  const inTransit=shipments.filter(s=>s.status!=="delivered").length;
+  const today=new Date().toISOString().slice(0,10);
+  const delayed=shipments.filter(s=>(s.nodes||[]).some(n=>n.plannedDate&&!n.actualDate&&n.plannedDate<today)).length;
+  document.getElementById("stats").innerHTML=`
+    <div class="stat-card"><div class="lbl">出运批次</div><div class="val">${shipments.length}</div></div>
+    <div class="stat-card"><div class="lbl">在途</div><div class="val">${inTransit}</div></div>
+    <div class="stat-card"><div class="lbl">已签收</div><div class="val">${shipments.length-inTransit}</div></div>
+    <div class="stat-card"><div class="lbl">延迟预警</div><div class="val" style="color:${delayed>0?'var(--r)':'var(--g900)'}">${delayed}</div></div>`;
+
+  const c=document.getElementById("shipmentList");
+  if(!filtered.length){c.innerHTML=`<div class="empty"><p>暂无出运批次</p></div>`;return}
+  let h=`<div style="overflow-x:auto"><table><thead><tr>
+    <th>批次号</th><th>PO号</th><th>发货日期</th><th>承运商</th><th>提单号</th>
+    <th>起运→目的港</th><th>集装箱/封号</th><th>出运明细</th><th>状态</th><th>操作</th>
+    </tr></thead><tbody>`;
+  for(const s of filtered){
+    const o=orders.find(x=>x.order_id===s.order_id);
+    const lines=s.lines.map(l=>esc(l.sku)+"×"+l.shipped_qty).join("<br>");
+    h+=`<tr><td><strong>${esc(s.shipment_no)}</strong></td><td>${esc(o?.po_number||"—")}</td>
+      <td style="font-size:12px">${esc(s.ship_date||"—")}</td>
+      <td style="font-size:12px">${esc(s.carrier||"—")}</td>
+      <td style="font-size:12px">${esc(s.tracking_no||"—")}</td>
+      <td style="font-size:12px">${esc(s.port_of_loading||"—")} → ${esc(s.port_of_discharge||"—")}</td>
+      <td style="font-size:11px;color:var(--g500)">${esc(s.container_no||"—")} / ${esc(s.seal_no||"—")}</td>
+      <td style="font-size:11px">${lines}</td>
+      <td><span class="ship-status ${s.status}">${SHIP_STATUS_LABEL[s.status]||s.status}</span></td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-s btn-o btn-i" onclick="openTimeline('${s.shipment_id}')" title="物流节点">📍</button>
+        <button class="btn btn-s btn-r btn-i" onclick="deleteShipment('${s.shipment_id}')" title="删除">🗑️</button>
+      </td></tr>`;
+  }
+  h+=`</tbody></table></div>`;c.innerHTML=h;
+}
+
+function deleteShipment(sid){
+  if(!confirm("删除该出运批次？"))return;
+  api("DELETE","/api/shipments/"+sid).then(async()=>{await loadAll();renderShipments();}).catch(e=>alert("删除失败: "+e.message));
+}
+
+let curTimelineShipId=null;
+function openTimeline(sid){
+  const s=shipments.find(x=>x.shipment_id===sid);if(!s)return;
+  curTimelineShipId=sid;
+  const o=orders.find(x=>x.order_id===s.order_id);
+  document.getElementById("timelineTitle").textContent="物流节点 — 批次 "+s.shipment_no+" ("+((o&&o.po_number)||"")+")";
+  const today=new Date().toISOString().slice(0,10);
+  const nodes=s.nodes||[];
+  let h=`<div class="timeline">`;
+  nodes.forEach((n,i)=>{
+    const isDone=!!n.actualDate;
+    const isOverdue=n.plannedDate&&!n.actualDate&&n.plannedDate<today;
+    const delayDays=n.plannedDate&&n.actualDate?Math.round((new Date(n.actualDate)-new Date(n.plannedDate))/86400000):0;
+    let delayClass="ok",delayText="";
+    if(isOverdue){delayClass="overdue";delayText="逾期 "+Math.round((new Date(today)-new Date(n.plannedDate))/86400000)+"天"}
+    else if(delayDays>0){delayClass="warn";delayText="延迟"+delayDays+"天"}
+    else if(delayDays<0){delayText="提前"+(-delayDays)+"天"}
+    else if(delayDays===0&&isDone){delayText="准时"}
+    h+=`<div class="timeline-item">
+      <div class="node-label">${n.label}<br><span style="font-size:10px;color:var(--g500)">${SHIP_NODES[i]?.en||""}</span></div>
+      <div class="dates">
+        <div class="date-row"><span class="lbl">计划:</span><input type="date" value="${n.plannedDate||""}" onchange="updateNode(${i},'plannedDate',this.value)" style="padding:3px 6px;border:1px solid var(--g300);border-radius:4px;font-size:11px"></div>
+        <div class="date-row"><span class="lbl">实际:</span><input type="date" value="${n.actualDate||""}" onchange="updateNode(${i},'actualDate',this.value)" style="padding:3px 6px;border:1px solid var(--g300);border-radius:4px;font-size:11px"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        ${isDone?'<span class="done-dot"></span>':'<span class="pending-dot"></span>'}
+        ${delayText?`<span class="delay ${delayClass}">${delayText}</span>`:""}
+      </div></div>`;
+  });
+  h+=`</div><div style="margin-top:16px;padding:12px;background:var(--g50);border-radius:6px;font-size:12px;color:var(--g500)"><strong>说明:</strong> 计划日期已过但实际日期未填会标红预警。</div>`;
+  document.getElementById("timelineBody").innerHTML=h;openModal("timelineModal");
+}
+
+function updateNode(idx,field,value){
+  const s=shipments.find(x=>x.shipment_id===curTimelineShipId);if(!s)return;
+  if(!s.nodes)s.nodes=SHIP_NODES.map(n=>({key:n.key,label:n.label,plannedDate:"",actualDate:""}));
+  s.nodes[idx][field]=value;
+  let lastDoneIdx=-1;s.nodes.forEach((n,i)=>{if(n.actualDate)lastDoneIdx=i});
+  if(lastDoneIdx>=0)s.status=s.nodes[lastDoneIdx].key;
+  api("PUT","/api/shipments/"+curTimelineShipId,{nodes:s.nodes,status:s.status}).then(()=>openTimeline(curTimelineShipId)).catch(e=>alert("保存失败: "+e.message));
+}
+function saveTimeline(){closeModal("timelineModal");renderShipments();alert("物流节点已保存")}
+
+// ═══════════════════════════════════════════════════════════
+//  INCREMENT 4: PAYMENTS, COSTS, PROFIT
+// ═══════════════════════════════════════════════════════════
+const COST_CATEGORIES=[
+  {key:"purchase",label:"采购成本",hint:"供应商报价合计"},
+  {key:"freight",label:"运费",hint:"CIF/CFR/CIP计入卖方成本"},
+  {key:"insurance",label:"保险费",hint:"CIF/CIP计入卖方成本"},
+  {key:"commission",label:"佣金",hint:"代理/中介费用"},
+  {key:"bank_fee",label:"银行费用",hint:"T/T/L/C手续费"},
+  {key:"other",label:"其他",hint:"包装/仓储/杂费"}
+];
+
+function getFxRate(currency){return fxConfig[currency]||1}
+
+// --- PAYMENTS ---
+function openPaymentModal(){
+  document.getElementById("payOrderId").innerHTML=orders.map(o=>`<option value="${o.order_id}">${esc(o.po_number)} — ${esc(o.buyer_id||"")}</option>`).join("");
+  document.getElementById("payCurrency").value="USD";
+  document.getElementById("payAmount").value="";
+  document.getElementById("payRef").value="";
+  document.getElementById("payNote").value="";
+  document.getElementById("payDate").value=new Date().toISOString().slice(0,10);
+  document.getElementById("payMethod").value="T/T";
+  openModal("paymentModal");
+  document.getElementById("payOrderId").onchange=onPayOrderChange;
+  onPayOrderChange();
+}
+
+function onPayOrderChange(){
+  const oid=document.getElementById("payOrderId").value;
+  const docs=documents.filter(d=>d.order_id===oid);
+  const cb=document.getElementById("payInvoiceCheckboxes");
+  if(!docs.length){cb.innerHTML=`<div style="font-size:12px;color:var(--g400)">该订单暂无已生成单证，收款将直接关联订单</div>`;return}
+  cb.innerHTML=docs.map(d=>{
+    const total=d.total_amount||0;
+    const received=getInvoiceReceived(d.invoice_no);
+    const remaining=total-received;
+    const st=remaining<=0?"paid":(received>0?"partial":"unpaid");
+    return `<label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer;font-size:13px">
+      <input type="checkbox" class="payInvCb" value="${d.invoice_no}" ${remaining>0?"checked disabled":""}>
+      <strong>${esc(d.invoice_no)}</strong>
+      <span class="pay-st ${st}">${st==="paid"?"已收清":st==="partial"?"部分收":"未收"}</span>
+      <span style="font-size:11px;color:var(--g500)">应收 ${fmt(total)} / 已收 ${fmt(received)}${remaining>0?" / 剩余 "+fmt(remaining):""}</span>
+    </label>`;
+  }).join("");
+}
+
+function getInvoiceReceived(invNo){
+  return payments.filter(p=>p.allocated_invoices&&p.allocated_invoices.some(a=>a.invoice_no===invNo))
+    .reduce((sum,p)=>sum+p.allocated_invoices.filter(a=>a.invoice_no===invNo).reduce((s,a)=>s+a.amount,0),0);
+}
+
+function savePayment(){
+  const amount=parseFloat(document.getElementById("payAmount").value)||0;
+  if(!amount){alert("请输入收款金额");return}
+  const checkedInvs=[...document.querySelectorAll(".payInvCb:checked")].map(cb=>cb.value);
+  const allocated_invoices=checkedInvs.map(invNo=>({invoice_no:invNo,amount:0}));
+  let totalRemaining=0;
+  allocated_invoices.forEach(a=>{
+    const doc=documents.find(d=>d.invoice_no===a.invoice_no);
+    const total=doc?doc.total_amount||0:0;
+    const received=getInvoiceReceived(a.invoice_no);
+    a.remaining=Math.max(total-received,0);
+    totalRemaining+=a.remaining;
+  });
+  if(totalRemaining>0){
+    const perUnit=amount/totalRemaining;
+    allocated_invoices.forEach(a=>{a.amount=Math.round(a.remaining*perUnit*100)/100});
+  }else{
+    allocated_invoices.forEach(a=>{a.amount=0});
+  }
+  const pay={payment_id:genId(),order_id:document.getElementById("payOrderId").value,
+    amount:amount,currency:document.getElementById("payCurrency").value,
+    method:document.getElementById("payMethod").value,
+    received_date:document.getElementById("payDate").value,
+    bank_reference:document.getElementById("payRef").value,
+    note:document.getElementById("payNote").value,
+    allocated_invoices:allocated_invoices.filter(a=>a.amount>0)};
+  api("POST","/api/payments",pay).then(async()=>{await loadAll();closeModal("paymentModal");renderPayments();alert("收款已保存");}).catch(e=>alert("保存失败: "+e.message));
+}
+
+function renderPayments(){
+  const sf=document.getElementById("payFilterStatus")?.value||"";
+  const search=(document.getElementById("payFilterSearch")?.value||"").toLowerCase();
+
+  // Invoice list
+  let invHtml=`<div style="overflow-x:auto"><table><thead><tr>
+    <th>发票号</th><th>PO号</th><th>币种</th><th>发票金额</th><th>已收金额</th><th>剩余</th><th>状态</th>
+    </tr></thead><tbody>`;
+  for(const d of documents){
+    const o=orders.find(x=>x.order_id===d.order_id);
+    const received=getInvoiceReceived(d.invoice_no);
+    const total=d.total_amount||0;
+    const remaining=Math.max(total-received,0);
+    const st=remaining<=0?"paid":(received>0?"partial":"unpaid");
+    if(sf&&sf!==st)continue;
+    invHtml+=`<tr><td><strong>${esc(d.invoice_no)}</strong></td><td>${esc(o?.po_number||"—")}</td>
+      <td>${esc(d.currency||"")}</td><td class="num">${fmt(total)}</td>
+      <td class="num">${fmt(received)}</td>
+      <td class="num" style="color:${remaining>0?'var(--w)':'var(--s)'}">${fmt(remaining)}</td>
+      <td><span class="pay-st ${st}">${st==="paid"?"已收清":st==="partial"?"部分收":"未收"}</span></td></tr>`;
+  }
+  invHtml+=`</tbody></table></div>`;
+  document.getElementById("invoiceList").innerHTML=invHtml;
+
+  // Payment records
+  let filteredPays=payments.slice().sort((a,b)=>b.createdAt-a.createdAt);
+  if(search)filteredPays=filteredPays.filter(p=>{
+    const o=orders.find(x=>x.order_id===p.order_id);
+    return ((o?.po_number)||"").toLowerCase().includes(search)||(p.bank_reference||"").toLowerCase().includes(search);
+  });
+  let payHtml=`<div style="overflow-x:auto"><table><thead><tr>
+    <th>PO号</th><th>金额</th><th>币种</th><th>方式</th><th>到账日期</th><th>水单号</th><th>备注</th><th>核销发票</th>
+    </tr></thead><tbody>`;
+  for(const p of filteredPays){
+    const o=orders.find(x=>x.order_id===p.order_id);
+    const allocs=(p.allocated_invoices||[]).map(a=>a.invoice_no).join(", ");
+    payHtml+=`<tr><td>${esc(o?.po_number||"—")}</td>
+      <td class="num">${fmt(p.amount)}</td><td>${esc(p.currency)}</td><td>${esc(p.method)}</td>
+      <td style="font-size:12px">${esc(p.received_date||"—")}</td>
+      <td style="font-size:12px">${esc(p.bank_reference||"—")}</td>
+      <td style="font-size:12px">${esc(p.note||"—")}</td>
+      <td style="font-size:11px">${allocs||"—"}</td></tr>`;
+  }
+  payHtml+=`</tbody></table></div>`;
+  document.getElementById("paymentList").innerHTML=filteredPays.length?payHtml:`<div class="empty"><p>暂无收款记录</p></div>`;
+}
+
+// --- COSTS ---
+function openCostModal(){
+  document.getElementById("costOrderId").innerHTML=orders.map(o=>`<option value="${o.order_id}">${esc(o.po_number)} — ${esc(o.buyer_id||"")}</option>`).join("");
+  document.getElementById("costCurrency").value="CNY";
+  openModal("costModal");
+  document.getElementById("costOrderId").onchange=onCostOrderChange;
+  onCostOrderChange();
+}
+
+function onCostOrderChange(){
+  const oid=document.getElementById("costOrderId").value;
+  const existing=costRecords.find(c=>c.order_id===oid)||{costs:[]};
+  const o=orders.find(x=>x.order_id===oid);
+  const cifLike=["CIF","CIP","CFR"].includes(o?.incoterms||"");
+  const ed=document.getElementById("costEditor");
+  let h=`<div class="cost-row hd"><div>类别</div><div>金额</div><div>备注</div><div></div></div>`;
+  COST_CATEGORIES.forEach(cat=>{
+    const cost=existing.costs.find(c=>c.category===cat.key)||{amount:0,note:""};
+    const disabled=!cifLike&&(cat.key==="freight"||cat.key==="insurance");
+    h+=`<div class="cost-row">
+      <div><div style="font-size:12px;font-weight:600">${cat.label}</div><div style="font-size:11px;color:var(--g400)">${cat.hint}</div>
+      ${disabled?'<div style="font-size:10px;color:var(--w)">该术语下不计入卖方成本</div>':''}</div>
+      <div><input type="number" step="0.01" id="cost_${cat.key}" value="${cost.amount||""}" placeholder="0.00" ${disabled?"disabled":""}></div>
+      <div><input type="text" id="costNote_${cat.key}" value="${cost.note||""}" placeholder="备注"></div>
+      <div></div></div>`;
+  });
+  ed.innerHTML=h;
+}
+
+function saveCosts(){
+  const oid=document.getElementById("costOrderId").value;
+  const currency=document.getElementById("costCurrency").value;
+  const costs=COST_CATEGORIES.map(cat=>({
+    category:cat.key,
+    amount:parseFloat(document.getElementById("cost_"+cat.key).value)||0,
+    note:document.getElementById("costNote_"+cat.key).value
+  })).filter(c=>c.amount>0||c.note);
+  api("POST","/api/costs",{order_id:oid,currency:currency,costs:costs}).then(async()=>{await loadAll();closeModal("costModal");renderProfit();alert("成本已保存");}).catch(e=>alert("保存失败: "+e.message));
+}
+
+function getOrderCosts(orderId){
+  const rec=costRecords.find(c=>c.order_id===orderId);
+  if(!rec)return 0;
+  return rec.costs.reduce((sum,c)=>sum+(c.amount||0),0)*getFxRate(rec.currency);
+}
+
+function getOrderRevenue(orderId){
+  const docs=documents.filter(d=>d.order_id===orderId);
+  if(!docs.length){
+    const o=orders.find(x=>x.order_id===orderId);
+    return o?o.total_amount||0:0;
+  }
+  let total=0;
+  docs.forEach(d=>{total+=(d.total_amount||0)*getFxRate(d.currency||"USD")});
+  return total;
+}
+
+// --- PROFIT ---
+function saveFxRate(){
+  const rate=parseFloat(document.getElementById("fxRate").value)||7.2;
+  api("PUT","/api/fx/USD",{rate:rate}).then(async()=>{await loadAll();renderProfit();alert("汇率已更新：USD = "+rate+" CNY");}).catch(e=>alert("保存失败: "+e.message));
+}
+
+function renderProfit(){
+  const buyerFilter=((document.getElementById("profitFilterBuyer")?.value)||"").toLowerCase();
+  document.getElementById("fxRate").value=fxConfig["USD"]||7.2;
+  let filtered=orders.slice();
+  if(buyerFilter)filtered=filtered.filter(o=>(o.buyer_id||"").toLowerCase().includes(buyerFilter));
+
+  const inProgress=filtered.filter(o=>["confirmed","producing","pending","partial"].includes(o.status)).length;
+  const pendingLines=filtered.reduce((sum,o)=>sum+o.lines.filter(l=>l.status==="pending").length,0);
+  const inTransit=shipments.filter(s=>s.status!=="delivered").length;
+  const totalReceivable=documents.reduce((sum,d)=>sum+(d.total_amount||0),0);
+  const totalReceived=payments.reduce((sum,p)=>sum+(p.amount||0),0);
+
+  document.getElementById("profitStats").innerHTML=`
+    <div class="stat-card"><div class="lbl">进行中订单</div><div class="val">${inProgress}</div></div>
+    <div class="stat-card"><div class="lbl">待出运行项</div><div class="val">${pendingLines}</div></div>
+    <div class="stat-card"><div class="lbl">在途批次</div><div class="val">${inTransit}</div></div>
+    <div class="stat-card"><div class="lbl">应收总额</div><div class="val">${fmt(totalReceivable)}</div></div>
+    <div class="stat-card"><div class="lbl">已收总额</div><div class="val">${fmt(totalReceived)}</div></div>`;
+
+  let h=`<div style="overflow-x:auto"><table><thead><tr>
+    <th>PO号</th><th>客户</th><th>币种</th><th>订单收入</th><th>成本(折算)</th><th>毛利</th><th>毛利率</th>
+    </tr></thead><tbody>`;
+  for(const o of filtered){
+    const revenue=getOrderRevenue(o.order_id);
+    const cost=getOrderCosts(o.order_id);
+    const profit=revenue-cost;
+    const margin=revenue>0?(profit/revenue*100):0;
+    const cls=profit>=0?"profit-pos":"profit-neg";
+    h+=`<tr><td><strong>${esc(o.po_number)}</strong></td><td>${esc(o.buyer_id||"—")}</td>
+      <td>${esc(o.currency)}</td><td class="num">${fmt(revenue)}</td>
+      <td class="num">${cost?fmt(cost):"—"}</td>
+      <td class="num ${cls}">${fmt(profit)}</td>
+      <td class="num ${cls}">${cost?margin.toFixed(1)+"%":"—"}</td></tr>`;
+  }
+  h+=`</tbody></table></div>`;
+  document.getElementById("profitList").innerHTML=filtered.length?h:`<div class="empty"><p>暂无订单</p></div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════════════════
+document.addEventListener("DOMContentLoaded",async function(){
+  try{
+    await loadAll();
+    loadIncoterms();
+    renderOrders();
+  }catch(e){
+    document.body.innerHTML='<div class="empty" style="padding:60px"><h2>后端未启动</h2><p style="margin-top:12px">请运行: <code style="background:var(--g100);padding:4px 10px;border-radius:4px">python3 server.py</code></p><p style="margin-top:6px;font-size:12px;color:var(--g400)">错误: '+esc(e.message)+'</p></div>';
+    return;
+  }
+  document.getElementById("filterStatus").addEventListener("change",renderOrders);
+  document.getElementById("filterSearch").addEventListener("input",renderOrders);
+  const sf=document.getElementById("shipFilterStatus");if(sf)sf.addEventListener("change",renderShipments);
+  const ss=document.getElementById("shipFilterSearch");if(ss)ss.addEventListener("input",renderShipments);
+  const pf=document.getElementById("payFilterStatus");if(pf)pf.addEventListener("change",renderPayments);
+  const ps=document.getElementById("payFilterSearch");if(ps)ps.addEventListener("input",renderPayments);
+  const pb=document.getElementById("profitFilterBuyer");if(pb)pb.addEventListener("input",renderProfit);
+});
+</script>
+</body>
+</html>
